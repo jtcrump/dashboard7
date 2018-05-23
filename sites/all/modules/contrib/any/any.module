@@ -1,0 +1,238 @@
+<?php
+
+/**
+ * @file
+ *
+ * Any Dependency module.
+ */
+
+const ANY_GROUP_DEFAULT = 'dependencies';
+
+/**
+ * Implements hook_boot().
+ *
+ * {@inheritdoc}
+ */
+function any_boot() {
+  // Intentionally left empty. This is just so this module can be included
+  // early on in the bootstrap phase to cache any others.
+}
+
+/**
+ * Implements hook_module_implements_alter().
+ *
+ * {@inheritdoc}
+ */
+function any_module_implements_alter(&$implementations, $hook) {
+  // Move system_info_alter to the end so it runs last.
+  if ($hook === 'system_info_alter' && array_key_exists('any', $implementations)) {
+    $item = $implementations['any'];
+    unset($implementations['any']);
+    $implementations['any'] = $item;
+  }
+}
+
+/**
+ * Implements hook_system_info_alter().
+ *
+ * {@inheritdoc}
+ */
+function any_system_info_alter(&$info, $file, $type) {
+  // Immediately return if this module is already altering, the type of
+  // extension is not a module, or the module does not have "any" data to
+  // process. Invoking system_rebuild_module_data() may cause recursion within
+  // this hook. To prevent this, use a static that can be tracked.
+  static $altering = FALSE;
+  if ($altering || $type !== 'module') {
+    return;
+  }
+
+  // Indicate that this module is now altering to prevent recursion.
+  $altering = TRUE;
+
+  // Ensure there following properties are set on the info array.
+  foreach (array('any', 'any_dependencies', 'any_missing') as $property) {
+    if (!isset($info[$property]) || !is_array($info[$property])) {
+      $info[$property] = array();
+    }
+  }
+
+
+  // Reference properties.
+  $any = &$info['any'];
+  $any_dependencies = &$info['any_dependencies'];
+  $any_missing = &$info['any_missing'];
+
+  if (!empty($any)) {
+    $modules = system_rebuild_module_data();
+    foreach ($any as $group_name => $group) {
+      // Set a default group, if group is numeric.
+      if (is_numeric($group_name)) {
+        $group_name = ANY_GROUP_DEFAULT;
+      }
+
+      // Convert group to an array if just a simple dependency was provided.
+      if (!is_array($group)) {
+        $group = array($group);
+      }
+
+      foreach ($group as $dependency) {
+        $dependency_requirement = drupal_parse_dependency($dependency);
+        $dependency_module = $dependency_requirement['name'];
+
+        $dependency_file = isset($modules[$dependency_module]) ? $modules[$dependency_module] : FALSE;
+        $version = $dependency_file ? str_replace(DRUPAL_CORE_COMPATIBILITY . '-', '', $dependency_file->info['version']) : '0';
+        $incompatible = $dependency_file ? drupal_check_incompatibility($dependency_requirement, $version) : TRUE;
+
+        // If there is no dependency file or version is incompatible, add it
+        // to the missing group.
+        if (!$dependency_file || $incompatible) {
+          $any_missing[$group_name][] = $dependency;
+        }
+        // Otherwise, it is a valid dependency and should be used.
+        else {
+          $any_dependencies[$group_name][] = $dependency;
+          break;
+        }
+      }
+    }
+
+    // Merge in each groups found dependencies into the main dependencies so
+    // the system knows to install it.
+    if ($any_dependencies) {
+      foreach ($any_dependencies as $dependencies) {
+        $info['dependencies'] = array_merge($info['dependencies'], $dependencies);
+      }
+    }
+  }
+
+
+  // Indicate that this module has stopped altering.
+  $altering = FALSE;
+}
+
+/**
+ * A helper function for determining any dependency requirements.
+ *
+ * @param $phase
+ *   The phase in which requirements are checked.
+ * @param string $module
+ *   The module to check.
+ * @param string|string[] $group
+ *   A specific group or groups to check.
+ *
+ * @return array
+ *   An array of requirement errors if checks failed.
+ */
+function any_check_install_requirements($phase, $module, $group = NULL) {
+  // Immediately return if not the install phase.
+  if ($phase !== 'install') {
+    return array();
+  }
+
+  $t = get_t();
+  $requirements = array();
+
+  $modules = system_rebuild_module_data();
+  $any_dependencies = isset($modules[$module]->info['any_dependencies']) ? $modules[$module]->info['any_dependencies'] : array();
+  $any_missing = isset($modules[$module]->info['any_missing']) ? $modules[$module]->info['any_missing'] : array();
+
+  // Retrieve a specific group.
+  $groups = isset($group) ? (array) $group : array_unique(array_merge(array_keys($any_dependencies), array_keys($any_missing)));
+  foreach ($groups as $group) {
+    if (!isset($any_dependencies[$group]) && !isset($any_missing[$group])) {
+      $requirements["$module-$group-group-missing"] = array(
+        'title' => $t('Unknown Group'),
+        'description' => $t('The module "@module" has no dependencies specified for the specified group in its .info file.', array(
+          '@module' => $module,
+        )),
+        'value' => $t('any[@group][] = ...', array('@group' => $group)),
+        'severity' => REQUIREMENT_ERROR,
+      );
+      return $requirements;
+    }
+
+
+    // Continue if at least one dependency was found in this group.
+    if (!empty($any_dependencies[$group])) {
+      continue;
+    }
+
+    // Add missing requirements.
+    if (!empty($any_missing[$group])) {
+      // If installing from Drush, give the user a change to install one.
+      if (!_any_drush_download($module, $any_missing[$group])) {
+        $requirements["$module-$group-dependency-missing"] = array(
+          'title' => $t('Unresolved "@group" dependency', array('@group' => $group)),
+          'description' => $t('The module "@name" requires at least one of the following modules to be installed for it to function properly.', array(
+            '@name' => $module,
+          )),
+          'value' => implode(', ', $any_missing[$group]),
+          'severity' => REQUIREMENT_ERROR,
+        );
+      }
+    }
+  }
+
+  return $requirements;
+}
+
+/**
+ * Allows a user to download a required dependency via Drush.
+ *
+ * @param string $module
+ *   The module name that requires the dependency.
+ * @param array $dependencies
+ *   An array of dependencies.
+ *
+ * @return bool
+ *   TRUE if a dependency was successfully downloaded and installed, FALSE
+ *   otherwise.
+ */
+function _any_drush_download($module, array $dependencies = array()) {
+  // Immediately return if not in running in Drush.
+  if (!drupal_is_cli() || !function_exists('drush_confirm')) {
+    return FALSE;
+  }
+
+  $options = array();
+  foreach ($dependencies as $dependency) {
+    $options[$dependency] = array($dependency);
+  }
+
+  $choice = drush_choice($options, dt('The module "@module" requires one of the following modules to function properly. Choose which project you wish to install:', array(
+    '@module' => $module,
+  )));
+  if (!$choice) {
+    return drush_user_abort();
+  }
+
+  // Extract the project to download.
+  $project = preg_replace('/\s*\([^\)]*\)\s*$/', '', $choice);
+
+  // Enable DRUSH_AFFIRMATIVE context temporarily.
+  $drush_affirmative = drush_get_context('DRUSH_AFFIRMATIVE');
+  drush_set_context('DRUSH_AFFIRMATIVE', FALSE);
+
+  // Invoke a new process to download dependencies.
+  $result = drush_invoke_process('@self', 'pm-download', array($project), array('select' => TRUE), array('interactive' => TRUE));
+  if (!(isset($result['error_status']) ? !$result['error_status'] : !!$result)) {
+    return drush_user_abort();
+  }
+
+  $result = drush_invoke_process('@self', 'pm-enable', array($project), array(), array('interactive' => TRUE));
+  if (!(isset($result['error_status']) ? !$result['error_status'] : !!$result)) {
+    return drush_user_abort();
+  }
+
+  // Restore DRUSH_AFFIRMATIVE context.
+  drush_set_context('DRUSH_AFFIRMATIVE', $drush_affirmative);
+
+  // Refresh module cache after downloading the new module.
+  if (drush_drupal_major_version() >= 8) {
+    \Drush\Drupal\ExtensionDiscovery::reset();
+    system_list_reset();
+  }
+
+  return TRUE;
+}
