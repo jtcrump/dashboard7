@@ -1,0 +1,56 @@
+<?php
+/**
+ * Implements hook_menu().
+ */
+function customer_form_handler_menu() {
+  $items = array();
+
+  $items['customer_form_handler/form'] = array(
+    'title' => t('My form'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('customer_form_handler_cust_response'),
+    'access arguments' => array('access content'),
+    'description' => t('My form'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+/**
+ * Returns the render array for the form.
+ */
+function customer_form_handler_cust_response($form, &$form_state) {
+  $form['name'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Name'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+  );
+
+  $form['name']['cust_purl'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Purl'),
+    '#required' => TRUE,
+    '#default_value' => "First name",
+    '#description' => "Please enter your first name.",
+    '#size' => 20,
+    '#maxlength' => 20,
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+
+  return $form;
+}
+
+/**
+ * Add a submit handler/function to the form.
+ *
+ * This will add a completion message to the screen when the
+ * form successfully processes
+ */
+function customer_form_handler_cust_response_submit($form, &$form_state) {
+  drupal_set_message(t('The form has been submitted.'));
+}
