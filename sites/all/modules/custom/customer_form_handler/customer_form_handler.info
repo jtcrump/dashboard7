@@ -1,0 +1,11 @@
+name = Customer Form Handler
+description = Inserts the customer web responses into the db
+core = 7.x
+
+
+; Information added by Drupal.org packaging script on 2018-05-30
+version = "7.x-1.2"
+core = "7.x"
+project = "customer_form_handler"
+datestamp = "1446225841"
+
