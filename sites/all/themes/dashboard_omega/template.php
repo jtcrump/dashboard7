@@ -28,7 +28,7 @@ function dashboard_omega_preprocess_html(&$variables) {
 
 	// get dealership node info
 	$customer_nid = $cust_nid[0];
-	$dealer_job_id = $cust_info[$customer_nid]->field_mail_recip_dealership_id['und'][0]['value'];
+	$dealer_job_id = $cust_info[$customer_nid]->field_job_id['und'][0]['value'];
 
 	$query = new EntityFieldQuery();
 	$result = $query
