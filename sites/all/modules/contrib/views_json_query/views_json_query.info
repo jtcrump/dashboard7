@@ -8,11 +8,14 @@ files[] = views_json_query_plugin_query_json.inc
 ; Handlers
 files[] = handlers/views_json_query_handler_field.inc
 files[] = handlers/views_json_query_handler_filter.inc
+files[] = handlers/views_json_query_handler_filter_query_string.inc
 files[] = handlers/views_json_query_handler_sort.inc
+files[] = handlers/views_json_query_handler_argument_query_string.inc
 
-; Information added by drupal.org packaging script on 2013-10-03
-version = "7.x-1.0"
+
+; Information added by Drupal.org packaging script on 2018-02-09
+version = "7.x-1.0+14-dev"
 core = "7.x"
 project = "views_json_query"
-datestamp = "1380823290"
+datestamp = "1518199985"
 

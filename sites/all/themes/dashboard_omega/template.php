@@ -11,8 +11,40 @@
  * for more information on this topic.
  */
 
+
+
+
+function dashboard_omega_preprocess_views_view(&$vars) {
+$view = $vars['view'];
+
+	if($view->name == 'theme') {
+		if($view->current_display == 'block'){
+
+		}
+	}
+}
+
+
 function dashboard_omega_preprocess_html(&$variables) {
-	if(@$GLOBALS['user']->roles[1] == "anonymous user"){
+
+
+	// make sure a dealer can only view jobs they are added as users to
+	if(substr($_SERVER['REQUEST_URI'],0,8) == '/dealer/'){
+		if(in_array('dealership',$GLOBALS['user']->roles)){
+			if(substr_count($variables['page']['content']['system_main']['main']['#markup'],'johndoe') == 0){
+			print "You are not authorised to see this job";
+			exit();
+			}
+		}
+	}
+
+
+
+
+
+/*
+
+	if(@$GLOBALS['user']->roles[1] == "anonymous user" AND $_GET['q'] != 'login'){
 	$wid = strtolower($GLOBALS['_GET']['q']);
 
 	// get user node info
@@ -61,9 +93,10 @@ function dashboard_omega_preprocess_html(&$variables) {
 	$variables[$myuser]['cust_info'] = $cust_info;
 	$variables[$myuser]['dealer_info'] = $dealer_info;
 	$variables[$myuser]['questions_info'] = $questions_info;
+	exit();
 	}
+*/
 }
-
 
 
 

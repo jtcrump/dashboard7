@@ -14,6 +14,8 @@ class views_json_query_handler_filter extends views_handler_filter_string {
   function option_definition() {
     $options = parent::option_definition();
     $options['key'] = array('default' => '');
+    // where does this really go?
+    $this->definition['allow empty'] = TRUE;
     return $options;
   }
 
@@ -114,10 +116,10 @@ class views_json_query_handler_filter extends views_handler_filter_string {
    * Generate.
    */
   function generate() {
-    $operator = $this->options['operator'];
+    // make sure we pass the operator so the filter conditions are handled correctly
+    $operator = $this->operator;
     $key = $this->options['key'];
     $value = $this->options['value'];
-
     return array($key, $operator, $value);
   }
 

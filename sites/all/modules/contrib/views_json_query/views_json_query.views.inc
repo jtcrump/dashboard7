@@ -32,6 +32,17 @@ function views_json_query_views_data() {
     ),
   );
 
+  $data['json']['query_string'] = array(
+    'title' => t('Query String'),
+    'help' => t("Parameter in the query string of the JSON file's URL."),
+    'filter' => array(
+      'handler' => 'views_json_query_handler_filter_query_string',
+    ),
+    'argument' => array(
+      'handler' => 'views_json_query_handler_argument_query_string',
+    ),
+  );
+
   return $data;
 }
 
