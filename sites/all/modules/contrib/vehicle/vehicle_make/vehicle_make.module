@@ -1,0 +1,885 @@
+<?php
+
+/**
+ * @file
+ * Provides basic Vehicle Make entity with ability to add custom fields.
+ */
+
+/**
+ * Implements hook_entity_info().
+ */
+function vehicle_make_entity_info() {
+  $info['vehicle_make'] = array(
+    'label' => t('Vehicle Make'),
+    'entity class' => 'VehicleMakeEntity',
+    'controller class' => 'VehicleMakeEntityController',
+    'base table' => 'vehicle_make',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'make_id',
+      'bundle' => 'bundle_type',
+    ),
+    'bundles' => array(
+      'vehicle_make_bundle' => array(
+        'label' => 'Vehicle make bundle',
+        'admin' => array(
+          'path' => 'admin/vehicle/make',
+          'access arguments' => array('administer vehicle_make entities'),
+        ),
+      ),
+    ),
+    'label callback' => 'vehicle_make_label',
+    'uri callback' => 'vehicle_make_uri',
+    'access callback' => 'vehicle_make_access',
+    'static cache' => TRUE,
+  );
+
+  return $info;
+}
+
+/**
+ * Fetches a vehicle_make entity by its entity id.
+ *
+ * This function ends up being a shim between the menu system and
+ * vehicle_make_load_multiple().
+ *
+ * This function gets its name from the menu system's wildcard
+ * naming conventions. For example, /path/%wildcard would end
+ * up calling wildcard_load(%wildcard value). In our case defining
+ * the path: vehicle/make/%vehicle_make in hook_menu() tells Drupal
+ * to call vehicle_make_load().
+ *
+ * @param int $make_id
+ *   Integer specifying the vehicle_make entity id.
+ * @param bool $reset
+ *   A boolean indicating that the internal cache should be reset.
+ *
+ * @return object
+ *   A fully-loaded vehicle_make object or FALSE if it cannot be loaded.
+ *
+ * @see vehicle_make_load_multiple()
+ * @see vehicle_make_menu()
+ */
+function vehicle_make_load($make_id = NULL, $reset = FALSE) {
+  $make_ids = (isset($make_id) ? array($make_id) : array());
+  $make = vehicle_make_load_multiple($make_ids, $reset);
+  return $make ? reset($make) : FALSE;
+}
+
+/**
+ * Loads multiple vehicle_make entities.
+ */
+function vehicle_make_load_multiple($make_ids = FALSE, $conditions = array(), $reset = FALSE) {
+  return entity_load('vehicle_make', $make_ids, $conditions, $reset);
+}
+
+/**
+ * Implements the uri callback.
+ */
+function vehicle_make_uri($make) {
+  return array(
+    'path' => 'vehicle/make/' . $make->make_id,
+  );
+}
+
+/**
+ * Implements the label callback.
+ */
+function vehicle_make_label($make) {
+  return check_plain($make->make_name);
+}
+
+/**
+ * Implements the access callback.
+ */
+function vehicle_make_access($op, $model = NULL, $account = NULL) {
+  // @todo Should probably add a permissions setting check.
+  return TRUE;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function vehicle_make_menu() {
+  // This provides a place for Field API to hang its own
+  // interface and has to be the same as what was defined
+  // in vehicle_make_entity_info() above.
+  $items['admin/vehicle/make'] = array(
+    'title' => 'Vehicle Makes',
+    'page callback' => 'vehicle_make_admin_page',
+    'description' => 'Configure vehicle makes fields and display.',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('administer vehicle_make entities'),
+  );
+
+  // This page displays a list of vehicle makes.
+  $items['vehicle'] = array(
+    'title' => 'Vehicle Makes',
+    'page callback' => 'vehicle_make_vehicle_page',
+    'access arguments' => array('view any vehicle_make entity'),
+  );
+
+  // This page displays info on the Vehicle Make.
+  // Plugins can extend this to display additional information
+  // by using hook_vehicle_make_view_alter().
+  $items['vehicle/make/%vehicle_make'] = array(
+    'page callback' => 'vehicle_make_page',
+    'page arguments' => array(2),
+    'access arguments' => array('view any vehicle_make entity'),
+  );
+
+  // 'Edit' tab for an individual entity page.
+  $items['admin/vehicle/make/%vehicle_make/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('vehicle_make_form', 3),
+    'access arguments' => array('edit any vehicle_make entity'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  // Add vehicle make entities.
+  $items['admin/vehicle/make/add'] = array(
+    'title' => 'Add Vehicle Make',
+    'page callback' => 'vehicle_make_add',
+    'access arguments' => array('create vehicle_make entities'),
+  );
+
+  // Autocomplete widget.
+  $items['vehicle/make/autocomplete'] = array(
+    'page callback' => '_vehicle_make_autocomplete',
+    'access arguments' => array('view any vehicle_make entity'),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Generates a JSON list of autocomplete matches for a vehicle_make.
+ *
+ * @param string $string
+ *   The text entered, for which matching vehicle_make entities are sought.
+ */
+function _vehicle_make_autocomplete($string) {
+  $matches = array();
+
+  $return = db_select('vehicle_make', 'v')
+    ->fields('v', array('make_name'))
+    ->condition('v.make_name', '%' . db_like($string) . '%', 'LIKE')
+    ->range(0, 10)
+    ->execute();
+
+  foreach ($return as $row) {
+    $matches[$row->make_name] = check_plain($row->make_name);
+  }
+
+  drupal_json_output($matches);
+}
+
+/**
+ * Implements hook_permission().
+ */
+function vehicle_make_permission() {
+  $permissions = array(
+    'administer vehicle_make entities' => array(
+      'title' => t('Administer vehicle make'),
+    ),
+    'view any vehicle_make entity' => array(
+      'title' => t('View any vehicle make entity'),
+    ),
+    'edit any vehicle_make entity' => array(
+      'title' => t('Edit any vehicle make entity'),
+    ),
+    'create vehicle_make entities' => array(
+      'title' => t('Create vehicle make entities'),
+    ),
+  );
+  return $permissions;
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function vehicle_make_views_api() {
+  return array(
+    'api' => 3,
+  );
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ */
+function vehicle_make_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+  // Add action link to 'admin/vehicle/make/add' on 'admin/vehicle/make' page.
+  if ($root_path == 'admin/vehicle/make') {
+    $item = menu_get_item('admin/vehicle/make/add');
+    $data['actions']['output'][] = array(
+      '#theme' => 'menu_local_action',
+      '#link' => $item,
+    );
+  }
+}
+
+/**
+ * Provides a list of existing entities and the ability to add more.
+ *
+ * Tabs provide field and display management.
+ */
+function vehicle_make_admin_page() {
+  $content = array();
+  $content[] = array(
+    '#type' => 'item',
+    '#markup' => t('Vehicle Make contains detailed information about vehicle makes that can be referenced in Vehicle Models.'),
+  );
+
+  $content['table'] = vehicle_make_list_entities();
+
+  return $content;
+}
+
+/**
+ * Returns a render array with all vehicle_make entities.
+ */
+function vehicle_make_list_entities() {
+  $header = array(
+    array('data' => t('Make'), 'field' => 'v.make_name'),
+    array('data' => t('Country'), 'field' => 'v.make_country'),
+  );
+
+  $query = db_select('vehicle_make', 'v')
+    ->extend('PagerDefault')
+    ->extend('TableSort');
+  $query->fields('v', array('make_id', 'make_name', 'make_country'));
+
+  $result = $query
+    ->limit(30)
+    ->orderByHeader($header)
+    ->execute();
+
+  $rows = array();
+  foreach ($result as $row) {
+    $rows[] = array(
+      'make_name' => l($row->make_name, 'admin/vehicle/make/' . $row->make_id . '/edit'),
+      'make_country' => check_plain($row->make_country),
+    );
+  }
+
+  $build['pager_table'] = array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
+    '#empty' => t('There are no vehicle makes found in the db'),
+  );
+
+  $build['pager_pager'] = array('#theme' => 'pager');
+
+  return $build;
+}
+
+/**
+ * Provides a list of vehicle makes for a regular user.
+ */
+function vehicle_make_vehicle_page() {
+  $content = array();
+
+  $header = array(
+    array('data' => t('Make'), 'field' => 'v.make_name'),
+    array('data' => t('Country'), 'field' => 'v.make_country'),
+  );
+
+  $query = db_select('vehicle_make', 'v')
+    ->extend('PagerDefault')
+    ->extend('TableSort');
+  $query->fields('v', array('make_id', 'make_name', 'make_country'));
+
+  $result = $query
+    ->limit(30)
+    ->orderByHeader($header)
+    ->execute();
+
+  $rows = array();
+  foreach ($result as $row) {
+    $rows[] = array(
+      'make_name' => l($row->make_name, 'vehicle/make/' . $row->make_id),
+      'make_country' => check_plain($row->make_country),
+    );
+  }
+
+  $content['pager_table'] = array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
+    '#empty' => t('There are no vehicle makes yet.'),
+  );
+
+  $content['pager_pager'] = array('#theme' => 'pager');
+
+  return $content;
+}
+
+/**
+ * Page callback for vehicle/make/%vehicle_make.
+ *
+ * @param entity $make
+ *   The fully loaded vehicle_make entity.
+ */
+function vehicle_make_page($make) {
+  drupal_set_title($make->make_name);
+
+  $breadcrumb = array();
+  $breadcrumb[] = l(t('Home'), NULL);
+  $breadcrumb[] = l(t('Vehicles'), 'vehicle');
+  drupal_set_breadcrumb($breadcrumb);
+
+  $build = array();
+
+  $build['term_heading'] = array(
+    '#prefix' => '<div class="term-listing-heading">',
+    '#suffix' => '</div>',
+    'make' => vehicle_make_view($make, 'full'),
+  );
+
+  return $build;
+}
+
+/**
+ * Builds Vehicle Make view.
+ *
+ * Includes hook for additional modules to expand functionality
+ * hook_vehicle_make_view_alter().
+ */
+function vehicle_make_view($entity, $view_mode = 'full', $langcode = NULL) {
+  if (!isset($langcode)) {
+    $langcode = $GLOBALS['language_content']->language;
+  }
+
+  field_attach_prepare_view('vehicle_make', array($entity->make_id => $entity), $view_mode, $langcode);
+  entity_prepare_view('vehicle_make', array($entity->make_id => $entity), $langcode);
+
+  $build = array(
+    '#make' => $entity->make_id,
+    '#make_name' => $entity->make_name,
+    '#view_mode' => $view_mode,
+    '#language' => $langcode,
+  );
+
+  $build += field_attach_view('vehicle_make', $entity, $view_mode, $langcode);
+
+  $type = 'vehicle_make';
+  drupal_alter(array('vehicle_make_view', 'entity_view'), $build, $type);
+
+  return $build;
+}
+
+/**
+ * Implements hook_field_extra_fields().
+ *
+ * This exposes the "extra fields" (usually properties that can be configured
+ * as if they were fields) of the entity as pseudo-fields
+ * so that they get handled by the Entity and Field core functionality.
+ * Node titles get treated in a similar manner.
+ */
+function vehicle_make_field_extra_fields() {
+  $form_elements['make_name'] = array(
+    'label' => t('Make name'),
+    'description' => t('The make_display column from Make List'),
+    'weight' => -2,
+  );
+  $form_elements['make_make_id'] = array(
+    'label' => t('Make machine name'),
+    'description' => t('The make_id column from Make List'),
+    'weight' => -2,
+  );
+  $form_elements['make_country'] = array(
+    'label' => t('Country'),
+    'description' => t('The make_country column from Make List'),
+    'weight' => -1,
+  );
+  $display_elements['make_name'] = array(
+    'label' => t('Make name'),
+    'weight' => -2,
+  );
+  $display_elements['make_make_id'] = array(
+    'label' => t('Make machine name'),
+    'weight' => -2,
+  );
+  $display_elements['make_country'] = array(
+    'label' => t('Country'),
+    'weight' => -1,
+  );
+
+  // Since we have only one bundle type, we'll just provide the extra_fields
+  // for it here.
+  $extra_fields['vehicle_make']['vehicle_make_bundle']['form'] = $form_elements;
+  $extra_fields['vehicle_make']['vehicle_make_bundle']['display'] = $display_elements;
+
+  return $extra_fields;
+}
+
+/**
+ * Provides a wrapper on the edit form to add a new entity.
+ */
+function vehicle_make_add() {
+  // Create a vehicle_make entity structure to be used and passed to the
+  // validation and submission functions.
+  $entity = entity_get_controller('vehicle_make')->create();
+  return drupal_get_form('vehicle_make_form', $entity);
+}
+
+/**
+ * Form function to create a vehicle_make entity.
+ *
+ * The pattern is:
+ * - Set up the form for the data that is specific to your
+ *   entity: the columns of your base table.
+ * - Call on the Field API to pull in the form elements
+ *   for fields attached to the entity.
+ */
+function vehicle_make_form($form, &$form_state, $entity) {
+  $form['make_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Make name'),
+    '#required' => TRUE,
+    '#default_value' => $entity->make_name,
+    '#weight' => -2,
+  );
+  $form['make_make_id'] = array(
+    '#type' => 'machine_name',
+    '#title' => t('Make machine name'),
+    '#description' => t('A unique machine-readable name. Can only contain lowercase letters, numbers, and hyphens.'),
+    '#required' => TRUE,
+    '#default_value' => $entity->make_make_id,
+    '#weight' => -2,
+    '#machine_name' => array(
+      'exists' => '_vehicle_make_check_machine_name_if_exist',
+      'source' => array('make_name'),
+      'replace_pattern' => '[^a-z0-9-]+',
+      'replace' => '-',
+    ),
+  );
+  $form['make_country'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Country'),
+    '#required' => FALSE,
+    '#default_value' => $entity->make_country,
+    '#weight' => -1,
+  );
+
+  $form['make_entity'] = array(
+    '#type' => 'value',
+    '#value' => $entity,
+  );
+
+  field_attach_form('vehicle_make', $entity, $form, $form_state);
+
+  $form['save'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+    '#weight' => 100,
+  );
+  if ($entity->make_id) {
+    $form['delete'] = array(
+      '#type' => 'submit',
+      '#value' => t('Delete'),
+      '#submit' => array('vehicle_make_edit_delete'),
+      '#weight' => 200,
+    );
+  }
+  else {
+    $form['save_continue'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save and add another'),
+      '#suffix' => l(t('Cancel'), 'admin/vehicle/make'),
+      '#weight' => 200,
+    );
+  }
+
+  return $form;
+}
+
+/**
+ * Checks whether a machine name (make_make_id field) already exists.
+ */
+function _vehicle_make_check_machine_name_if_exist($string) {
+  $return = db_select('vehicle_make', 'v')
+    ->fields('v', array('make_make_id'))
+    ->condition('v.make_make_id', $string, '=')
+    ->range(0, 10)
+    ->execute();
+
+  foreach ($return as $row) {
+    return 1;
+  }
+
+  return 0;
+}
+
+/**
+ * Validation handler for vehicle_make_add_form form.
+ *
+ * We pass things straight through to the Field API to handle validation
+ * of the attached fields.
+ */
+function vehicle_make_form_validate($form, &$form_state) {
+  field_attach_form_validate('vehicle_make', $form_state['values']['make_entity'], $form, $form_state);
+}
+
+/**
+ * Form submit handler: submits vehicle_make_form information.
+ */
+function vehicle_make_form_submit($form, &$form_state) {
+  $entity = $form_state['values']['make_entity'];
+  $entity->make_make_id = $form_state['values']['make_make_id'];
+  $entity->make_name = $form_state['values']['make_name'];
+  $entity->make_country = $form_state['values']['make_country'];
+  field_attach_submit('vehicle_make', $entity, $form, $form_state);
+  $entity = vehicle_make_save($entity);
+  drupal_set_message(t('The vehicle make %make has been saved', array('%make' => $entity->make_name)));
+
+  // Set the redirect based on the button clicked.
+  $array_parents = $form_state['triggering_element']['#array_parents'];
+  $submit_element = array_pop($array_parents);
+
+  if ($submit_element == 'save_continue') {
+    $form_state['redirect'] = 'admin/vehicle/make/add';
+  }
+  else {
+    $form_state['redirect'] = 'admin/vehicle/make';
+  }
+}
+
+/**
+ * Form deletion handler.
+ *
+ * @todo: 'Are you sure?' message.
+ */
+function vehicle_make_edit_delete($form, &$form_state) {
+  $entity = $form_state['values']['make_entity'];
+  vehicle_make_delete($entity);
+  drupal_set_message(t('The entity (ID %id) has been deleted', array('%id' => $entity->make_id)));
+  $form_state['redirect'] = 'admin/vehicle/make';
+}
+
+/**
+ * We save the entity by calling the controller.
+ */
+function vehicle_make_save(&$entity) {
+  return entity_get_controller('vehicle_make')->save($entity);
+}
+
+/**
+ * Use the controller to delete the entity.
+ */
+function vehicle_make_delete($entity) {
+  entity_get_controller('vehicle_make')->delete($entity);
+}
+
+class VehicleMakeEntity extends Entity {
+  /**
+   * Implements defaultLabel().
+   */
+  protected function defaultLabel() {
+    return $this->make_name;
+  }
+
+  /**
+   * Implements defaultUri().
+   */
+  protected function defaultUri() {
+    return array('path' => 'vehicle/make/' . $this->identifier());
+  }
+}
+
+/**
+ * VehicleMakeEntityControllerInterface definition.
+ *
+ * We create an interface here because anyone could come along and
+ * use hook_entity_info_alter() to change our controller class.
+ * We want to let them know what methods our class needs in order
+ * to function with the rest of the module, so here's a handy list.
+ *
+ * @see hook_entity_info_alter()
+ */
+
+interface VehicleMakeEntityControllerInterface extends DrupalEntityControllerInterface {
+  /**
+   * Creates and returns a new vehicle_make entity.
+   */
+  public function create();
+
+  /**
+   * Saves the custom fields using drupal_write_record().
+   */
+  public function save($entity);
+
+  /**
+   * Deletes a single entity.
+   *
+   * @param int $entity
+   *   A single numeric entity ID.
+   */
+  public function delete($entity);
+}
+
+/**
+ * VehicleMakeEntityController extends DrupalDefaultEntityController.
+ *
+ * Our subclass of DrupalDefaultEntityController lets us add a few
+ * important create, update, and delete methods.
+ */
+class VehicleMakeEntityController extends DrupalDefaultEntityController implements VehicleMakeEntityControllerInterface {
+  /**
+   * Creates and returns a new vehicle_make entity.
+   */
+  public function create() {
+    $entity = new stdClass();
+    $entity->type = 'vehicle_make';
+    $entity->make_id = 0;
+    $entity->bundle_type = 'vehicle_make_bundle';
+    $entity->make_make_id = '';
+    $entity->make_name = '';
+    $entity->make_country = '';
+    return $entity;
+  }
+
+  /**
+   * Saves the custom fields using drupal_write_record().
+   */
+  public function save($entity) {
+    // If our entity has no make_id, then we need to give it a
+    // time of creation.
+    if (empty($entity->make_id)) {
+      $entity->created = time();
+    }
+    // Invoke hook_entity_presave().
+    module_invoke_all('entity_presave', $entity, 'vehicle_make');
+    // The 'primary_keys' argument determines whether this will be an insert
+    // or an update. So if the entity already has an ID, we'll specify
+    // make_id as the key.
+    $primary_keys = $entity->make_id ? 'make_id' : array();
+    // Write out the entity record.
+    drupal_write_record('vehicle_make', $entity, $primary_keys);
+    // We're going to invoke either hook_entity_update() or
+    // hook_entity_insert(), depending on whether or not this is a
+    // new entity. We'll just store the name of hook_entity_insert()
+    // and change it if we need to.
+    $invocation = 'entity_insert';
+    // Now we need to either insert or update the fields which are
+    // attached to this entity. We use the same primary_keys logic
+    // to determine whether to update or insert, and which hook we
+    // need to invoke.
+    if (empty($primary_keys)) {
+      field_attach_insert('vehicle_make', $entity);
+      // Integration with the pathauto module to create an alias.
+      if (module_exists('pathauto')) {
+        vehicle_make_create_alias($entity, 'insert');
+      }
+    }
+    else {
+      field_attach_update('vehicle_make', $entity);
+      $invocation = 'entity_update';
+      // Integration with the pathauto module to create an alias.
+      if (module_exists('pathauto')) {
+        vehicle_make_create_alias($entity, 'update');
+      }
+    }
+    // Invoke either hook_entity_update() or hook_entity_insert().
+    module_invoke_all($invocation, $entity, 'vehicle_make');
+    return $entity;
+  }
+
+  /**
+   * Deletes a single entity.
+   *
+   * Really a convenience function for deleteMultiple().
+   *
+   * @param int $entity
+   *   A single numeric entity ID.
+   */
+  public function delete($entity) {
+    $this->deleteMultiple(array($entity));
+  }
+
+  /**
+   * Delete one or more vehicle_make entities.
+   *
+   * Deletion is unfortunately not supported in the base
+   * DrupalDefaultEntityController class.
+   *
+   * @param int $entities
+   *   An array of entity IDs or a single numeric ID.
+   */
+  public function deleteMultiple($entities) {
+    $make_ids = array();
+    $entities = $entities ? $this->load($entities) : FALSE;
+    if (!empty($entities)) {
+      $transaction = db_transaction();
+      try {
+        foreach ($entities as $entity) {
+          module_invoke_all('vehicle_make_delete', $entity);
+          // Invoke hook_entity_delete().
+          module_invoke_all('entity_delete', $entity, 'vehicle_make');
+          field_attach_delete('vehicle_make', $entity);
+          $make_ids[] = $entity->make_id;
+        }
+        db_delete('vehicle_make')
+          ->condition('make_id', $make_ids, 'IN')
+          ->execute();
+
+      }
+      catch (Exception $e) {
+        $transaction->rollback();
+        watchdog_exception('vehicle_make', $e);
+        throw $e;
+      }
+    }
+  }
+}
+
+/***************************************************************
+ * Pathauto Module integration
+ ***************************************************************/
+
+/**
+ * Implements hook_pathauto().
+ */
+function vehicle_make_pathauto($op) {
+  $settings = new stdClass();
+  $settings->module = 'vehicle_make';
+  $settings->groupheader = t('Vehicle make paths');
+  $settings->patterndescr = t('Pattern for vehicle make paths');
+  $settings->patterndefault = 'vehicle/[vehicle_make:machine]';
+  $settings->token_type = 'vehicle_make';
+  $settings->batch_update_callback = 'vehicle_make_pathauto_bulkupdate';
+  return $settings;
+}
+
+/**
+ * Creates an alias using pathauto.
+ */
+function vehicle_make_create_alias(stdClass $entity, $op, array $options = array()) {
+  module_load_include('inc', 'pathauto');
+  $uri = entity_uri('vehicle_make', $entity);
+  pathauto_create_alias('vehicle_make', $op, $uri['path'], array('vehicle_make' => $entity));
+}
+
+/**
+ * Bulk update callback for pathauto.
+ */
+function vehicle_make_pathauto_bulkupdate() {
+  $make_entities = entity_load('vehicle_make', FALSE);
+
+  if (module_exists('pathauto')) {
+    foreach ($make_entities as $make) {
+      vehicle_make_create_alias($make, 'bulkupdate');
+    }
+  }
+
+  $count = count($make_entities);
+  if ($count == 1) {
+    drupal_set_message(t('1 vehicle make was updated.'));
+  }
+  else {
+    drupal_set_message(t('@count vehicle makes were updated.', array('@count' => $count)));
+  }
+}
+
+/**
+ * Implements hook_path_alias_types().
+ *
+ * Bulk delete callback for pathauto.
+ */
+function vehicle_make_path_alias_types() {
+  $objects['vehicle/make/'] = t('Vehicle makes');
+
+  return $objects;
+}
+
+/***************************************************************
+ * Token Module integration
+ ***************************************************************/
+
+/**
+ * Implements hook_token_info().
+ */
+function vehicle_make_token_info() {
+  $type = array(
+    'name' => t('Vehicle make'),
+    'description' => t('Tokens related to vehicle make.'),
+    'needs-data' => 'vehicle_make',
+  );
+
+  $vehicle_make['name'] = array(
+    'name' => t("Make name"),
+    'description' => t("The make name of the vehicle."),
+  );
+
+  $vehicle_make['machine'] = array(
+    'name' => t("Machine name"),
+    'description' => t("The machine name of the vehicle make."),
+  );
+
+  return array(
+    'types' => array('vehicle_make' => $type),
+    'tokens' => array('vehicle_make' => $vehicle_make),
+  );
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function vehicle_make_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  $url_options = array('absolute' => TRUE);
+
+  if (isset($options['language'])) {
+    $url_options['language'] = $options['language'];
+    $language_code = $options['language']->language;
+  }
+  else {
+    $language_code = NULL;
+  }
+
+  $sanitize = !empty($options['sanitize']);
+
+  $replacements = array();
+
+  if ($type == 'vehicle_make' && !empty($data['vehicle_make'])) {
+    $vehicle_make = $data['vehicle_make'];
+
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'name':
+          $replacements[$original] = $sanitize ? check_plain($vehicle_make->make_name) : $vehicle_make->make_name;
+          break;
+
+        case 'machine':
+          $replacements[$original] = $sanitize ? check_plain($vehicle_make->make_make_id) : $vehicle_make->make_make_id;
+          break;
+      }
+    }
+  }
+
+  return $replacements;
+}
+
+/***************************************************************
+ * Feeds Module integration
+ ***************************************************************/
+
+/**
+ * Implements hook_feeds_plugins().
+ */
+function vehicle_make_feeds_plugins() {
+  $info = array();
+  $info['VehicleMakeProcessor'] = array(
+    'name' => 'Vehicle make processor',
+    'description' => 'Create vehicle makes from parsed content.',
+    'handler' => array(
+      'parent' => 'FeedsProcessor',
+      'class' => 'VehicleMakeProcessor',
+      'file' => 'vehicle_make.feeds.inc',
+      'path' => drupal_get_path('module', 'vehicle_make'),
+    ),
+  );
+  return $info;
+}

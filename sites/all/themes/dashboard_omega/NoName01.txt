@@ -1,0 +1,199 @@
+<div id="root"></div>
+        <script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script>
+        <script src="/sites/all/themes/dashboard_omega/js/landing-page-renderer.js" type="text/javascript"></script>
+        <script type="text/javascript">
+            function serialize(obj) {
+                var str = [];
+                for(var p in obj) {
+                    if (obj.hasOwnProperty(p)) {
+                        str.push(encodeURIComponent(p) + "=" + encodeURIComponent(obj[p]));
+                    }
+                }
+                return str.join("&");
+            }
+            var data = {
+                state:  {"fonts": [], "editable": {"id": "91a2c48c-48bd-41bd-aa95-8f1f80005d4c", "cells": [{"id": "d4225fc0-4205-4ead-872e-4d54f4d203b6", "rows": [{"id": "60be94a3-1856-4876-ae04-03ddc89adaa8", "cells": [{"id": "449eb0dc-aba9-4a9a-bb02-5b92073ebc57", "rows": [{"id": "22271c43-03e6-4467-9dc4-83ab714288e2", "cells": [{"id": "fd067246-446d-4d05-bc4b-05bd8df9a90a", "size": 6, "inline": null, "content": {"state": {"url": "https://pictures.dealer.com/s/smithlordsburgfordfd/1651/1cefc4c5b080c54a2706db9575cfb099x.jpg?impolicy=downsize&h=80", "width": 266, "height": null, "textAlign": "left", "borderRadius": null}, "plugin": {"name": "directmail.io/image", "version": "0.0.3"}}}, {"id": "2111801c-bb5a-4032-b39a-510af427e479", "rows": [{"id": "2c316540-9825-4500-8bc7-e5fef5d8d94a", "cells": [{"id": "f0dbcad6-a417-48f3-8243-da4739dae1f0", "size": 12, "inline": null, "content": {"state": {"html": "<p style=\"text-align:right\"><strong>412 E Motel Dr<br/>Lordsburg, NM 88045</strong></p>", "fonts": [], "editorState": {"object": "value", "document": {"data": {}, "nodes": [{"data": {"textAlign": "right"}, "type": "paragraph", "nodes": [{"leaves": [{"text": "412 E Motel Dr\nLordsburg, NM 88045", "marks": [{"data": {}, "type": "bold", "object": "mark"}], "object": "leaf"}], "object": "text"}], "isVoid": false, "object": "block"}], "object": "document"}}}, "plugin": {"name": "directmail.io/text", "version": "0.0.1"}}}]}], "size": 6, "inline": null, "layout": {"state": {"size": null, "margin": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "radius": 0, "repeat": {"x": false, "y": false}, "opacity": null, "padding": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "position": null, "fullWidth": false, "brightness": null, "borderRadius": null, "hiddenOnMobile": false}, "plugin": {"name": "directmail.io/one-column", "version": "0.0.4"}}}]}], "size": 12, "inline": null, "layout": {"state": {"size": null, "margin": {"all": null, "top": 20, "left": null, "right": null, "bottom": 20, "setAll": false}, "radius": 0, "repeat": {"x": false, "y": false}, "opacity": null, "padding": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "position": null, "fullWidth": false, "brightness": null, "borderRadius": null, "hiddenOnMobile": false}, "plugin": {"name": "directmail.io/one-column", "version": "0.0.4"}}}]}, {"id": "409558f7-56ff-4c24-a675-98817ad4d6e3", "cells": [{"id": "9281e395-ef75-4834-a022-e685acd964a3", "rows": [{"id": "e4350dc7-66c9-4d3c-8769-7b47e5a8d936", "cells": [{"id": "3b332a63-2d1d-4736-b0a8-133bc2db01ab", "rows": [{"id": "556c45d4-dab2-485f-8fd7-38e22bfb38e2", "cells": [{"id": "d49261e4-fd50-4a47-a5e4-b5541eb67fee", "size": 12, "inline": null, "content": {"state": {"height": 25}, "plugin": {"name": "directmail.io/spacer", "version": "0.0.1"}}}]}, {"id": "d4591d0a-3598-4afa-bba6-887337729ebe", "cells": [{"id": "2d7845c6-f920-49be-8469-10fbdb2a5104", "rows": [{"id": "ef9f6975-552c-4454-857b-65dcd9a7ae2f", "cells": [{"id": "1d0e9b3a-4b6c-4e50-9e87-44b7a7eafa7d", "size": 12, "inline": null, "content": {"state": {"url": "//static.directmail.io/images/campaign/6118/15996/landing_page_dR6EYV4crZb1qTG9ny8HzK3oJ4HeRDvi.png", "width": 500, "height": null, "textAlign": "center", "borderRadius": null}, "plugin": {"name": "directmail.io/image", "version": "0.0.3"}}}]}], "size": 12, "inline": null, "layout": {"state": {"size": null, "margin": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "radius": 0, "repeat": {"x": false, "y": false}, "opacity": null, "padding": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "position": null, "fullWidth": false, "brightness": null, "borderRadius": null, "hiddenOnMobile": false}, "plugin": {"name": "directmail.io/one-column", "version": "0.0.4"}}}]}, {"id": "ad756b6f-a164-4136-af41-6845bdee331c", "cells": [{"id": "c32b1c80-13ed-4a49-b6dc-49d698a4a45f", "size": 12, "inline": null, "content": {"state": {"height": 35}, "plugin": {"name": "directmail.io/spacer", "version": "0.0.1"}}}]}, {"id": "8da24d88-8c2b-461d-b115-eaf576acc60d", "cells": [{"id": "f444f43e-b77a-48dc-a50d-f1efbf543ddb", "size": 12, "inline": null, "content": {"state": {"html": "<p style=\"font-size:32px;text-align:center\"><span class=\"dm-variable\" data-node=\"variable\" data-variable=\"first-name\"><span style=\"color:rgba(255, 255, 255, 1)\" data-mark=\"color\"><strong>…</strong></span></span><span style=\"color:rgba(255, 255, 255, 1)\" data-mark=\"color\"><strong>, <br/>become a VIP member now!!</strong></span></p>", "fonts": [], "editorState": {"object": "value", "document": {"data": {}, "nodes": [{"data": {"fontSize": 32, "textAlign": "center"}, "type": "paragraph", "nodes": [{"leaves": [{"text": "", "marks": [], "object": "leaf"}], "object": "text"}, {"data": {"variable": "first-name"}, "type": "variable", "nodes": [{"leaves": [{"text": "…", "marks": [{"data": {}, "type": "bold", "object": "mark"}, {"data": {"color": "rgba(255, 255, 255, 1)"}, "type": "color", "object": "mark"}], "object": "leaf"}], "object": "text"}], "isVoid": false, "object": "inline"}, {"leaves": [{"text": ", \nbecome a VIP member now!!", "marks": [{"data": {}, "type": "bold", "object": "mark"}, {"data": {"color": "rgba(255, 255, 255, 1)"}, "type": "color", "object": "mark"}], "object": "leaf"}], "object": "text"}], "isVoid": false, "object": "block"}], "object": "document"}}}, "plugin": {"name": "directmail.io/text", "version": "0.0.1"}}}]}, {"id": "8a8d361a-4931-4791-bc46-af7d106fb0de", "cells": [{"id": "9e03f93a-b374-4ef6-a05e-cb464f775636", "size": 12, "inline": null, "content": {"state": {"html": "<p style=\"font-size:20px;text-align:center\"><span style=\"color:rgba(255, 255, 255, 1)\" data-mark=\"color\"><em><strong>Register here and be the first to receive discounts and rewards. We will also move you to the front of the line for this event!*</strong></em></span></p>", "fonts": [], "editorState": {"object": "value", "document": {"data": {}, "nodes": [{"data": {"fontSize": 20, "textAlign": "center"}, "type": "paragraph", "nodes": [{"leaves": [{"text": "Register here and be the first to receive discounts and rewards. We will also move you to the front of the line for this event!*", "marks": [{"data": {}, "type": "bold", "object": "mark"}, {"data": {}, "type": "italic", "object": "mark"}, {"data": {"color": "rgba(255, 255, 255, 1)"}, "type": "color", "object": "mark"}], "object": "leaf"}], "object": "text"}], "isVoid": false, "object": "block"}], "object": "document"}}}, "plugin": {"name": "directmail.io/text", "version": "0.0.1"}}}]}], "size": 7, "inline": null, "layout": {"state": {"size": null, "margin": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "radius": 0, "repeat": {"x": false, "y": false}, "opacity": null, "padding": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "position": null, "fullWidth": false, "brightness": null, "borderRadius": null, "hiddenOnMobile": false}, "plugin": {"name": "directmail.io/one-column", "version": "0.0.4"}}}, {"id": "d252874f-150e-4c8c-8f9f-a1fcfe2bbf73", "rows": [{"id": "7ab8f944-9774-4d8e-98af-5ac1e69c21ca", "cells": [{"id": "544aed46-b974-407d-8f01-616ca7a238ab", "rows": [{"id": "9b483304-d552-4b5c-9c16-fc6ef6403903", "cells": [{"id": "f7816f96-e8cc-4312-b5b1-c8b5e72f7afc", "size": 12, "inline": null, "content": {"state": {}, "plugin": {"name": "directmail.io/form", "version": "0.0.1"}}}]}], "size": 12, "inline": null, "layout": {"state": {"size": null, "margin": {"all": 26, "top": null, "left": 50, "right": null, "bottom": null, "setAll": true}, "radius": 0, "repeat": {"x": false, "y": false}, "opacity": null, "padding": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": false}, "position": null, "fullWidth": false, "brightness": null, "borderRadius": null, "hiddenOnMobile": false}, "plugin": {"name": "directmail.io/one-column", "version": "0.0.4"}}}]}], "size": 5, "inline": null, "layout": {"state": {"size": null, "color": "#000000", "margin": {"all": null, "top": null, "left": 35, "right": null, "bottom": null, "setAll": false}, "radius": 0, "repeat": {"x": false, "y": false}, "opacity": null, "padding": {"all": 1, "top": null, "left": null, "right": null, "bottom": null, "setAll": false}, "position": null, "fullWidth": false, "brightness": null, "borderRadius": null, "hiddenOnMobile": false, "backgroundColor": "rgba(255, 255, 255, 1)"}, "plugin": {"name": "directmail.io/one-column", "version": "0.0.4"}}}]}], "size": 12, "inline": null, "layout": {"state": {"url": "//static.directmail.io/images/campaign/6118/15996/landing_page_OLnQLFqycLSSRo9Tv5mQuYPHLRecjIgL.jpeg", "size": "cover", "type": "image", "margin": {"all": 0, "top": 3, "left": null, "right": null, "bottom": null, "setAll": true}, "radius": 0, "repeat": {"x": false, "y": false}, "opacity": null, "padding": {"all": 18, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "position": "center bottom", "fullWidth": false, "brightness": 100, "borderRadius": null, "hiddenOnMobile": false}, "plugin": {"name": "directmail.io/two-columns", "version": "0.0.4"}}}]}, {"id": "9bc8eee4-263b-4f60-954c-b6549c353744", "cells": [{"id": "4c37762a-2ffd-418c-a796-4b4c5889a726", "rows": [{"id": "962438b1-40ef-493b-a1fb-1ece5ad1e6aa", "cells": [{"id": "102a415d-0aac-4b96-bec8-f39303e97a26", "rows": [{"id": "ed548a27-71ba-4563-afe0-17c7d69597e4", "cells": [{"id": "1571ada6-fc34-485c-95c8-4b796a8e24d2", "size": 12, "inline": null, "content": {"state": {"height": 37}, "plugin": {"name": "directmail.io/spacer", "version": "0.0.1"}}}]}, {"id": "f7d35ba8-d2a8-493c-873f-c2fdda0de1bc", "cells": [{"id": "213196d0-342d-4749-a8a5-744d49f466df", "rows": [{"id": "458bcea7-d365-46f9-a66e-fa9580fa5ba8", "cells": [{"id": "fe597875-072e-4d0c-8be5-f1db9535c204", "rows": [{"id": "a1f69d33-e5a8-4404-8c6f-6503b9b493b7", "cells": [{"id": "bdcead39-94ef-41f9-b9d1-d9afa46555db", "size": 12, "inline": null, "content": {"state": {"html": "<p><strong>Visit Us </strong></p>", "fonts": [], "editorState": {"object": "value", "document": {"data": {}, "nodes": [{"data": {}, "type": "paragraph", "nodes": [{"leaves": [{"text": "Visit Us ", "marks": [{"data": {}, "type": "bold", "object": "mark"}], "object": "leaf"}], "object": "text"}], "isVoid": false, "object": "block"}], "object": "document"}}}, "plugin": {"name": "directmail.io/text", "version": "0.0.1"}}}]}], "size": 12, "inline": null, "layout": {"state": {"size": null, "margin": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "radius": 0, "repeat": {"x": false, "y": false}, "opacity": null, "padding": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "position": null, "fullWidth": false, "brightness": null, "borderRadius": null, "hiddenOnMobile": false}, "plugin": {"name": "directmail.io/one-column", "version": "0.0.4"}}}]}, {"id": "ed39f96d-6fb2-4903-8aa2-be34db7c8fad", "cells": [{"id": "5b0f75bf-3585-4421-a82b-ee8c3e9885cf", "rows": [{"id": "13485f05-6197-453d-91ab-cea66272e943", "cells": [{"id": "dfb38dad-c49c-48e0-9aef-8ea2455b4eee", "size": 12, "inline": null, "content": {"state": {"zoom": 17, "center": {"lat": 32.34888899999999, "lng": -108.70424000000004}, "marker": {"__gm": {"ic": {"Re": null, "map": null}, "re": null, "set": null}, "visible": true, "position": {"lat": 32.34888899999999, "lng": -108.70424000000004}, "clickable": true, "gm_bindings_": {"visible": {}, "position": {}, "clickable": {}}, "gm_accessors_": {"visible": null, "position": null, "clickable": null}}, "address": "412 E Motel Dr, Lordsburg, NM 88045, USA", "destinationPlaceId": "ChIJ2cE4oyMC2YYRq5EWf3Ju2nY"}, "plugin": {"name": "directmail.io/map", "version": "0.0.1"}}}]}], "size": 12, "inline": null, "layout": {"state": {"size": null, "margin": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "radius": 0, "repeat": {"x": false, "y": false}, "opacity": null, "padding": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "position": null, "fullWidth": false, "brightness": null, "borderRadius": null, "hiddenOnMobile": false}, "plugin": {"name": "directmail.io/one-column", "version": "0.0.4"}}}]}], "size": 12, "inline": null, "layout": {"state": {"size": null, "margin": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "radius": 0, "repeat": {"x": false, "y": false}, "opacity": null, "padding": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "position": null, "fullWidth": false, "brightness": null, "borderRadius": null, "hiddenOnMobile": false}, "plugin": {"name": "directmail.io/one-column", "version": "0.0.4"}}}]}], "size": 12, "inline": null, "layout": {"state": {"size": null, "margin": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "radius": 0, "repeat": {"x": false, "y": false}, "opacity": null, "padding": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "position": null, "fullWidth": false, "brightness": null, "borderRadius": null, "hiddenOnMobile": false}, "plugin": {"name": "directmail.io/one-column", "version": "0.0.4"}}}]}, {"id": "a16c4740-a538-4dbf-9374-9a04ccdb6ca1", "cells": [{"id": "2e6b6356-aceb-43e9-b835-7cc33c4f3e07", "rows": [{"id": "d2009319-9d7a-4228-a44f-0eaf6a772f4c", "cells": [{"id": "a5acb4f1-a470-4a5b-a289-5e2f67dfc35a", "rows": [{"id": "3562045d-5e09-4d8d-9b4c-b627affcc851", "cells": [{"id": "5140c6a2-2e92-4968-b407-54f96c5d4ee7", "size": 12, "inline": null, "content": {"state": {"height": 19}, "plugin": {"name": "directmail.io/spacer", "version": "0.0.1"}}}]}, {"id": "24e35338-3903-4258-8be6-9c9fdc168a29", "cells": [{"id": "d108ea9e-7961-4c36-87eb-79b346ec84eb", "size": 12, "inline": null, "content": {"state": {"html": "<p style=\"font-size:11px;text-align:left\">*See dealer for details.</p>", "fonts": [], "editorState": {"object": "value", "document": {"data": {}, "nodes": [{"data": {"fontSize": 11, "textAlign": "left"}, "type": "paragraph", "nodes": [{"leaves": [{"text": "*See dealer for details.", "marks": [], "object": "leaf"}], "object": "text"}], "isVoid": false, "object": "block"}], "object": "document"}}}, "plugin": {"name": "directmail.io/text", "version": "0.0.1"}}}]}], "size": 12, "inline": null, "layout": {"state": {"size": null, "margin": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "radius": 0, "repeat": {"x": false, "y": false}, "opacity": null, "padding": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "position": null, "fullWidth": false, "brightness": null, "borderRadius": null, "hiddenOnMobile": false}, "plugin": {"name": "directmail.io/one-column", "version": "0.0.4"}}}]}], "size": 12, "inline": null, "layout": {"state": {"size": null, "margin": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "radius": 0, "repeat": {"x": false, "y": false}, "opacity": null, "padding": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "position": null, "fullWidth": false, "brightness": null, "borderRadius": null, "hiddenOnMobile": false}, "plugin": {"name": "directmail.io/one-column", "version": "0.0.4"}}}]}], "size": 12, "inline": null, "layout": {"state": {"size": null, "margin": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "radius": 0, "repeat": {"x": false, "y": false}, "opacity": null, "padding": {"all": null, "top": null, "left": null, "right": null, "bottom": null, "setAll": true}, "position": null, "fullWidth": false, "brightness": 100, "borderRadius": null, "hiddenOnMobile": false}, "plugin": {"name": "directmail.io/one-column", "version": "0.0.4"}}}]}], "size": 12, "inline": null}]}, "template": "Button Form", "primaryFont": "Arial"},
+                context: {"company-name":"Smith Ford of Lordsburg","first-name":"New Customer","last-name":"","auto-year":"","auto-make":"","auto-model":"","trade-value":"","pre-approval":"","variableImage":"https:\/\/staging-static.directmail.io\/img\/vehicle_silhouette.png"},
+                initialOptions: {"steps_remaining":7,"content_type":"FORM","text_header":"Lets Start!","text_content":"Enter your information below!","submit_text":"Get Started","inputs":[{"type":"text","label":"First Name","name":"first_name","value":"New Customer","required":true},{"type":"text","label":"Last Name","name":"last_name","value":"","required":true},{"type":"tel","label":"Phone","name":"phone","value":"","required":true},{"type":"email","label":"Email","name":"email","value":null,"required":true},{"type":"checkbox","label":"I agree to receive event related information and offers via phone, email, and text","name":"opt_in","value":"1","required":false}]},
+                onSubmit: function(formDataObj) {
+                    return new Promise(function(resolve, reject) {
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST', 'http://www.smithfordevent.com/update');
+                        xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                        xhr.setRequestHeader('X-CSRF-TOKEN', document.head.querySelector('[name="_token"]').content);
+                        xhr.onload = function() {
+                            if (xhr.status == 200) {
+                                resolve(JSON.parse(xhr.response));
+                            } else {
+                                reject(Error(xhr.statusText));
+                            }
+                        };
+                        xhr.onerror = function() {
+                            reject(Error("Network Error"));
+                        };
+                        xhr.send(serialize(formDataObj));
+                    });
+                },
+                onShare: function(formDataObj) {
+                    return new Promise(function(resolve, reject) {
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST', 'http://www.smithfordevent.com/update');
+                        xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                        xhr.setRequestHeader('X-CSRF-TOKEN', document.head.querySelector('[name="_token"]').content);
+                        xhr.onload = function() {
+                            if (xhr.status == 200) {
+                                resolve(JSON.parse(xhr.response));
+                            } else {
+                                reject(Error(xhr.statusText));
+                            }
+                        };
+                        xhr.onerror = function() {
+                            reject(Error("Network Error"));
+                        };
+                        xhr.send(serialize(formDataObj));
+                    });
+                },
+                getDataAsync: function(getDataUrl, getDataParams) {
+                    return new Promise(function(resolve, reject) {
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('GET', getDataUrl+'?'+serialize(getDataParams));
+                        xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+                        xhr.setRequestHeader('X-CSRF-TOKEN', document.head.querySelector('[name="_token"]').content);
+                        xhr.onload = function() {
+                            if (xhr.status == 200) {
+                                resolve(JSON.parse(xhr.response));
+                            } else {
+                                reject(Error(xhr.statusText));
+                            }
+                        };
+                        xhr.onerror = function() {
+                            reject(Error("Network Error"));
+                        };
+                        xhr.send();
+                    });
+                }
+            };
+            window.render(data);
+        </script>
+
+
+
+
+
+
+
+
+
+
+
+<?php 
+/* if the user is an anonymous mailer recipient render their page */
+if(@$user->roles[1] == "anonymous user"){
+	if(isset($variables[$myurl])) {
+	// print $variables[$myuser]['wid'];
+	}
+
+	if(isset($variables[$myurl]['cust_info'])) {
+	print "<pre>";
+	// print_r($variables[$myuser]['cust_info']);
+	print "</pre>";
+
+	$x=0;
+		foreach($variables[$myuser]['cust_info'] as $key){
+   			foreach ($key as $value) {
+				if($x ==0){
+       				$unid = $value;
+				$x++;
+				}
+   			}
+		}
+	}
+
+	if(isset($variables[$myurl]['dealer_info'])) {
+ 	print "<pre>";
+	// print_r($variables[$myurl]['dealer_info']);
+ 	print "</pre>";
+
+	$x=0;
+		foreach($variables[$myuser]['dealer_info'] as $key){
+   			foreach ($key as $value) {
+				if($x ==0){
+       				$dnid = $value;
+				$x++;
+				}
+   			}
+		}
+	$djid = $variables[$myurl]['dealer_info'][$dnid]->field_job_id['und'][0]['value'];
+	$dname = $variables[$myurl]['dealer_info'][$dnid]->title;
+	$lat = $variables[$myurl]['dealer_info'][$dnid]->field_map_position['und'][0]['lat'];
+	$long = $variables[$myurl]['dealer_info'][$dnid]->field_map_position['und'][0]['lon'];
+	}
+
+	if(isset($variables[$myurl]['questions_info'])) {
+ 	print "<pre>";
+	// print_r($variables[$myuser]['questions_info']);
+ 	print "</pre>";
+	}
+
+
+/* add the form */
+print '<h3>Hi '.ucwords(strtolower($variables[$myuser]['cust_info'][$unid]->field_mail_recip_first_name['und'][0]['value'])).'!</h3>';
+?>
+
+<form name="customer_response_form" action="/form.php" method="POST">
+<input type="hidden" name="purl" value="<?php print $variables[$myuser]['wid']; ?>">
+<input type="hidden" name="unid" value="<?php print $unid; ?>">
+<input type="hidden" name="fname" value="<?php print ucwords(strtolower($variables[$myuser]['cust_info'][$unid]->field_mail_recip_first_name['und'][0]['value'])); ?>">
+<input type="hidden" name="lname" value="<?php print ucwords(strtolower($variables[$myuser]['cust_info'][$unid]->field_mail_recip_last_name['und'][0]['value'])); ?>">
+<input type="hidden" name="address" value="<?php print ucwords(strtolower($variables[$myuser]['cust_info'][$unid]->field_mail_recip_address['und'][0]['thoroughfare'])); ?>">
+<input type="hidden" name="city" value="<?php print ucwords(strtolower($variables[$myuser]['cust_info'][$unid]->field_mail_recip_address['und'][0]['locality'])); ?>">
+<input type="hidden" name="state" value="<?php print strtoupper($variables[$myuser]['cust_info'][$unid]->field_mail_recip_address['und'][0]['administrative_area']); ?>">
+<input type="hidden" name="zip" value="<?php print strtoupper($variables[$myuser]['cust_info'][$unid]->field_mail_recip_address['und'][0]['postal_code']); ?>">
+<input type="hidden" name="dealer_id" value="<?php print $dnid; ?>">
+
+<?php
+$z=0;
+
+foreach($variables[$myuser]['questions_info'] as $q){
+print $q->title;
+print " ";
+$zz=0;
+	foreach($q->field_answers['und'] as $a){
+	$zz++;
+	}
+
+	if($zz == 0){
+	print '<input type="text" name="q'.$z.'" value="">';
+	} else {
+		foreach($q->field_answers['und'] as $a){
+    		print '<input type="radio" id="contactChoice1" name="q'.$z.'" value="'.$a['value'].'"> <label for="contactChoice1">'.$a['value'].'</label>';
+		print "  ";
+		}
+	}
+$z++;
+print "<br />";
+}
+print "<br />";
+print "<br />";
+?>
+<script src="http://dashboard7.dd:8083/sites/all/modules/contrib/gmap/js/gmap.js?p9m4zp"></script>
+<script src="http://maps.googleapis.com/maps/api/js?v=3&amp;language=en&amp;sensor=false&amp;libraries=places%2Cgeometry&amp;key=AIzaSyA8INWQhJfF9GjmRSWRX-mUKX2u2Nn4vUs"></script>
+<script src="http://dashboard7.dd:8083/sites/all/modules/contrib/gmap/js/icon.js?p9m4zp"></script>
+<script src="http://dashboard7.dd:8083/sites/all/modules/contrib/gmap/js/marker.js?p9m4zp"></script>
+<script src="http://dashboard7.dd:8083/sites/all/modules/contrib/gmap/js/highlight.js?p9m4zp"></script>
+<script src="http://dashboard7.dd:8083/sites/all/modules/contrib/gmap/js/poly.js?p9m4zp"></script>
+<script src="/sites/dashboard7.dd/files/js/gmap_markers.js"></script>
+<script src="http://dashboard7.dd:8083/sites/all/modules/contrib/gmap/js/markerloader_static.js?p9m4zp"></script>
+<script src="http://dashboard7.dd:8083/sites/all/modules/contrib/gmap/js/gmap_marker.js?p9m4zp"></script>
+<script>jQuery.extend(Drupal.settings, {"basePath":"\/","pathPrefix":"","colorbox":{"opacity":"0.85","current":"{current} of {total}","previous":"\u00ab Prev","next":"Next \u00bb","close":"Close","maxWidth":"98%","maxHeight":"98%","fixed":true,"mobiledetect":true,"mobiledevicewidth":"480px"},"overlay":{"paths":{"admin":"node\/*\/webform\nnode\/*\/webform\/*\nnode\/*\/webform-results\nnode\/*\/webform-results\/*\nnode\/*\/submission\/*\nimport\nimport\/*\nnode\/*\/import\nnode\/*\/delete-items\nnode\/*\/log\nfield-collection\/*\/*\/edit\nfield-collection\/*\/*\/delete\nfield-collection\/*\/add\/*\/*\nfile\/add\nfile\/add\/*\nfile\/*\/edit\nfile\/*\/usage\nfile\/*\/delete\nmedia\/*\/edit\/*\nmedia\/*\/format-form\nmedia\/browser\nmedia\/browser\/*\nnode\/*\/edit\nnode\/*\/delete\nnode\/*\/revisions\nnode\/*\/revisions\/*\/revert\nnode\/*\/revisions\/*\/delete\nnode\/add\nnode\/add\/*\noverlay\/dismiss-message\nuser\/*\/shortcuts\nadmin\nadmin\/*\nbatch\ntaxonomy\/term\/*\/edit\nuser\/*\/cancel\nuser\/*\/edit\nuser\/*\/edit\/*\nfile\/*\/panelizer*\nnode\/*\/panelizer*\ntaxonomy\/term\/*\/panelizer*\nuser\/*\/panelizer*","non_admin":"admin\/structure\/block\/demo\/*\nadmin\/reports\/status\/php"},"pathPrefixes":[],"ajaxCallback":"overlay-ajax"},"better_exposed_filters":{"views":{"job_zip_code_stats":{"displays":{"block_1":{"filters":[]},"block":{"filters":[]}}},"test_map":{"displays":{"page_1":{"filters":[]}}},"answers_to_web_questions":{"displays":{"block":{"filters":[]},"block_1":{"filters":[]},"block_2":{"filters":[]},"block_3":{"filters":[]},"block_4":{"filters":[]},"block_5":{"filters":[]},"block_6":{"filters":[]}}}}},"gmap":{"auto1map":{"width":"600px","height":"500px","zoom":4,"maxzoom":"12","controltype":"Small","pancontrol":1,"streetviewcontrol":0,"align":"None","maptype":"Map","mtc":"standard","baselayers":{"Map":1},"styles":{"line_default":["0000ff","5","45","",""],"poly_default":["000000","3","25","ff0000","45"],"highlight_color":"ff0000"},"line_colors":["#00cc00","#ff0000","#0000ff"],"behavior":{"locpick":false,"nodrag":0,"nokeyboard":1,"nomousezoom":0,"nocontzoom":0,"autozoom":1,"dynmarkers":0,"overview":0,"collapsehack":0,"scale":0,"extramarkerevents":false,"clickableshapes":false,"highlight":0},"markermode":"0","id":"auto1map","markers":[{"latitude":<?php print $lat; ?>,"longitude":<?php print $long; ?>,"markername":"drupal","offset":0,"text":"<?php print $dname; ?>","autoclick":1,"opts":{"title":"","highlight":0,"highlightcolor":"#FF0000","animation":"2"}}],"latitude":"38.56439432970777","longitude":"-93.92399729011618"}}});</script>
+
+<?php
+$myView = views_embed_view('test_map','page_1',$djid);
+if(isset($myView)){echo $myView;}
+?>
+
+<input type="submit" name="submit" value="submit">
+</form>
+<?php
+} else {
+?>

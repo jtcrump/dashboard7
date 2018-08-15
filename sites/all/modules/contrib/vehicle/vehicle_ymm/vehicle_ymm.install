@@ -1,0 +1,106 @@
+<?php
+
+/**
+ * @file
+ * Installation hooks for the Vehicle Year Make Model Field module.
+ */
+
+/**
+ * Implements hook_field_schema().
+ */
+function vehicle_ymm_field_schema($field) {
+  return array(
+    'columns' => array(
+      'model_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ),
+      'make_id' => array(
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+      ),
+    ),
+    'indexes' => array(
+      'model_id' => array('model_id'),
+      'make_id' => array('make_id'),
+    ),
+    'foreign keys' => array(
+      'model_id' => array(
+        'table' => 'vehicle_model',
+        'columns' => array('model_id' => 'model_id'),
+      ),
+      'make_id' => array(
+        'table' => 'vehicle_make',
+        'columns' => array('make_id' => 'make_id'),
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_schema().
+ */
+function vehicle_ymm_schema() {
+  $schema['vehicle_ymm_index'] = array(
+    'description' => 'Maintains denormalized information about node/make/model relationships.',
+    'fields' => array(
+      'nid' => array(
+        'description' => 'The {node}.nid this record tracks.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'make_id' => array(
+        'description' => 'The make ID.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'model_id' => array(
+        'description' => 'The model ID.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'sticky' => array(
+        'description' => 'Boolean indicating whether the node is sticky.',
+        'type' => 'int',
+        'not null' => FALSE,
+        'default' => 0,
+        'size' => 'tiny',
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the node was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      'make_node' => array('make_id', 'sticky', 'created'),
+      'model_node' => array('model_id', 'sticky', 'created'),
+      'nid' => array('nid'),
+    ),
+    'foreign keys' => array(
+      'tracked_node' => array(
+        'table' => 'node',
+        'columns' => array('nid' => 'nid'),
+      ),
+      'make' => array(
+        'table' => 'vehicle_make',
+        'columns' => array('make_id' => 'make_id'),
+      ),
+      'model' => array(
+        'table' => 'vehicle_model',
+        'columns' => array('model_id' => 'model_id'),
+      ),
+    ),
+  );
+
+  return $schema;
+}

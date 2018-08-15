@@ -1,0 +1,76 @@
+<?php
+
+/**
+ * @file
+ * Installation hooks for the Vehicle Make module.
+ */
+
+/**
+ * Implements hook_enable().
+ */
+function vehicle_make_enable() {
+  // Clear the cache to display in Feeds as available plugin.
+  cache_clear_all('plugins:feeds:plugins', 'cache');
+}
+
+/**
+ * Implements hook_schema().
+ */
+function vehicle_make_schema() {
+  $schema = array();
+
+  $schema['vehicle_make'] = array(
+    'description' => 'Table to store vehicle makes, based on Make List from carqueryapi.com.',
+    'fields' => array(
+      'make_id' => array(
+        'description' => 'Primary key of the vehicle_make entity.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      // Normally, bundle_type will be 'vehicle_make_bundle', but we allow
+      // for other bundle types.
+      'bundle_type' => array(
+        'description' => 'The bundle type',
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => TRUE,
+      ),
+      'make_make_id' => array(
+        'description' => 'The make_id column from Make List',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'make_name' => array(
+        'description' => 'The make_display column from Make List',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'make_country' => array(
+        'description' => 'The make_country column from Make List',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('make_id'),
+  );
+
+  return $schema;
+}
+
+
+/**
+ * Implements hook_uninstall().
+ *
+ * At uninstall time we'll notify field.module that the entity was deleted
+ * so that attached fields can be cleaned up.
+ */
+function vehicle_make_uninstall() {
+  field_attach_delete_bundle('vehicle_make', 'vehicle_make_bundle');
+}

@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * @file
+ * Base Vehicle module menu and configuration interface.
+ */
+
+
+/**
+ * Implements hook_menu().
+ */
+function vehicle_menu() {
+  $items['admin/vehicle'] = array(
+    'title' => 'Vehicles',
+    'page callback' => 'system_admin_menu_block_page',
+    'access arguments' => array('access administration pages'),
+    'file path' => drupal_get_path('module', 'system'),
+    'file' => 'system.admin.inc',
+  );
+
+  return $items;
+}

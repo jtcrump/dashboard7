@@ -1,0 +1,7 @@
+select.vehicle-ymm-year,
+select.vehicle-ymm-make,
+select.vehicle-ymm-model,
+select.vehicle-ymm-trim {
+  display: inline-block;
+  margin-right: 6px;
+}

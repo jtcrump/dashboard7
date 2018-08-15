@@ -1,0 +1,908 @@
+<?php
+
+/**
+ * @file
+ * Provides basic Vehicle Model entity.
+ */
+
+/**
+ * Implements hook_entity_info().
+ */
+function vehicle_model_entity_info() {
+  $info['vehicle_model'] = array(
+    'label' => t('Vehicle Model'),
+    'controller class' => 'VehicleModelEntityController',
+    'base table' => 'vehicle_model',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'model_id',
+      'bundle' => 'bundle_type',
+    ),
+    'bundles' => array(
+      'vehicle_model_bundle' => array(
+        'label' => 'Vehicle model bundle',
+        'admin' => array(
+          'path' => 'admin/vehicle/model',
+          'access arguments' => array('administer vehicle_model entities'),
+        ),
+      ),
+    ),
+    'label callback' => 'vehicle_model_label',
+    'uri callback' => 'vehicle_model_uri',
+    'static cache' => TRUE,
+  );
+
+  return $info;
+}
+
+/**
+ * Fetches a vehicle_model entity by its entity id.
+ *
+ * This function ends up being a shim between the menu system and
+ * vehicle_model_load_multiple().
+ *
+ * This function gets its name from the menu system's wildcard
+ * naming conventions. For example, /path/%wildcard would end
+ * up calling wildcard_load(%wildcard value). In our case defining
+ * the path: vehicle/model/%vehicle_model in hook_menu() tells Drupal
+ * to call vehicle_model_load().
+ *
+ * @param int $model_id
+ *   Integer specifying the vehicle_model entity id.
+ * @param bool $reset
+ *   A boolean indicating that the internal cache should be reset.
+ *
+ * @return object
+ *   A fully-loaded vehicle_model object or FALSE if it cannot be loaded.
+ *
+ * @see vehicle_model_load_multiple()
+ * @see vehicle_model_menu()
+ */
+function vehicle_model_load($model_id = NULL, $reset = FALSE) {
+  $model_ids = (isset($model_id) ? array($model_id) : array());
+  $model = vehicle_model_load_multiple($model_ids, $reset);
+  return $model ? reset($model) : FALSE;
+}
+
+/**
+ * Loads multiple vehicle_model entities.
+ */
+function vehicle_model_load_multiple($model_ids = FALSE, $conditions = array(), $reset = FALSE) {
+  return entity_load('vehicle_model', $model_ids, $conditions, $reset);
+}
+
+/**
+ * Implements the uri callback.
+ */
+function vehicle_model_uri($model) {
+  return array(
+    'path' => 'vehicle/model/' . $model->model_id,
+  );
+}
+
+/**
+ * Implements the label callback.
+ */
+function vehicle_model_label($model) {
+  ($model->year_start == $model->year_end) ? $year = $model->year_start : $year = $model->year_start . '-' . $model->year_end;
+
+  return $year . ' ' . $model->model_name . ' ' . $model->model_trim;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function vehicle_model_menu() {
+  // This provides a place for Field API to hang its own
+  // interface and has to be the same as what was defined
+  // in vehicle_model_entity_info() above.
+  $items['admin/vehicle/model'] = array(
+    'title' => 'Vehicle Models',
+    'page callback' => 'vehicle_model_admin_page',
+    'description' => 'Configure vehicle models fields and display.',
+    'type' => MENU_NORMAL_ITEM,
+    'access arguments' => array('administer vehicle_model entities'),
+  );
+
+  // The page to view our entities - needs to follow what is
+  // defined in vehicle_model_uri and will use vehicle_model_load
+  // to retrieve the necessary entity info.
+  $items['vehicle/model/%vehicle_model'] = array(
+    'page callback' => 'vehicle_model_page',
+    'page arguments' => array(2),
+    'access arguments' => array('view any vehicle_model entity'),
+  );
+
+  // 'Edit' tab for an individual entity page.
+  $items['admin/vehicle/model/%vehicle_model/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('vehicle_model_form', 3),
+    'access arguments' => array('edit any vehicle_model entity'),
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  // Add vehicle model entities.
+  $items['admin/vehicle/model/add'] = array(
+    'title' => 'Add Vehicle Model',
+    'page callback' => 'vehicle_model_add',
+    'access arguments' => array('create vehicle_model entities'),
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_permission().
+ */
+function vehicle_model_permission() {
+  $permissions = array(
+    'administer vehicle_model entities' => array(
+      'title' => t('Administer vehicle model'),
+    ),
+    'view any vehicle_model entity' => array(
+      'title' => t('View any vehicle model entity'),
+    ),
+    'edit any vehicle_model entity' => array(
+      'title' => t('Edit any vehicle model entity'),
+    ),
+    'create vehicle_model entities' => array(
+      'title' => t('Create vehicle model entities'),
+    ),
+  );
+  return $permissions;
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function vehicle_model_views_api() {
+  return array(
+    'api' => 3,
+  );
+}
+
+/**
+ * Implements hook_local_tasks_alter().
+ */
+function vehicle_model_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+  // Add action link to 'admin/vehicle/model/add' on 'admin/vehicle/model' page.
+  if ($root_path == 'admin/vehicle/model') {
+    $item = menu_get_item('admin/vehicle/model/add');
+    $data['actions']['output'][] = array(
+      '#theme' => 'menu_local_action',
+      '#link' => $item,
+    );
+  }
+}
+
+/**
+ * Alter the Vehicle Make page to include a list of models.
+ */
+function vehicle_model_vehicle_make_view_alter(&$build, $type) {
+  $query = db_select('vehicle_model', 'm')
+    ->extend('PagerDefault')
+    ->extend('TableSort')
+    ->fields('m', array(
+      'model_id',
+      'model_name',
+      'model_trim',
+      'model_year_start',
+      'model_year_end',
+      'model_body',
+    ))
+    ->condition('m.make_id', $build['#make'], '=');
+
+  $header = array(
+    array('data' => t('Year'), 'field' => 'm.model_year_start'),
+    array('data' => t('Model'), 'field' => 'm.model_name'),
+    array('data' => t('Trim'), 'field' => 'm.model_trim'),
+    array('data' => t('Body Style'), 'field' => 'm.model_body'),
+  );
+
+  $result = $query
+    ->limit(30)
+    ->orderByHeader($header)
+    ->execute();
+
+  $rows = array();
+  foreach ($result as $row) {
+    $rows[] = array(
+      'model_year_start' => ($row->model_year_start != $row->model_year_end) ? check_plain($row->model_year_start) . '-' . check_plain($row->model_year_end) : check_plain($row->model_year_start),
+      'model_name' => l($row->model_name, 'vehicle/model/' . $row->model_id),
+      'model_trim' => check_plain($row->model_trim),
+      'model_body' => check_plain($row->model_body),
+    );
+  }
+
+  $build['pager_table'] = array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
+    '#empty' => t('There are no vehicle models found for this make.'),
+  );
+
+  $build['pager_pager'] = array('#theme' => 'pager');
+}
+
+/**
+ * Provides a list of existing entities and the ability to add more.
+ *
+ * Tabs provide field and display management.
+ */
+function vehicle_model_admin_page() {
+  $content = array();
+  $content[] = array(
+    '#type' => 'item',
+    '#markup' => t('Vehicle Models contain detailed information about specific models as they relate to vehicle make.'),
+  );
+
+  $content['table'] = vehicle_model_list_entities();
+
+  return $content;
+}
+
+/**
+ * Returns a render array with all vehicle_model entities.
+ */
+function vehicle_model_list_entities() {
+  $query = db_select('vehicle_model', 'm')
+    ->extend('PagerDefault')
+    ->extend('TableSort');
+  $make_alias = $query->join('vehicle_make', 'k', '%alias.make_id = m.make_id');
+  $query->fields('m', array(
+    'model_id',
+    'model_name',
+    'model_trim',
+    'model_year_start',
+    'model_year_end',
+    'model_body',
+  ))->fields($make_alias, array('make_id', 'make_name'));
+
+  $header = array(
+    array('data' => t('Year'), 'field' => 'm.model_year_start'),
+    array('data' => t('Make'), 'field' => $make_alias . '.make_name'),
+    array('data' => t('Model'), 'field' => 'm.model_name'),
+    array('data' => t('Trim'), 'field' => 'm.model_trim'),
+    array('data' => t('Body Style'), 'field' => 'm.model_body'),
+  );
+
+  $result = $query
+    ->limit(30)
+    ->orderByHeader($header)
+    ->execute();
+
+  $rows = array();
+  foreach ($result as $row) {
+    $rows[] = array(
+      'model_year_start' => ($row->model_year_start != $row->model_year_end) ? check_plain($row->model_year_start) . '-' . check_plain($row->model_year_end) : check_plain($row->model_year_start),
+      'make_name' => l($row->make_name, 'admin/vehicle/make/' . $row->make_id . '/edit'),
+      'model_name' => l($row->model_name, 'admin/vehicle/model/' . $row->model_id . '/edit'),
+      'model_trim' => check_plain($row->model_trim),
+      'model_body' => check_plain($row->model_body),
+    );
+  }
+
+  $build['pager_table'] = array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
+    '#empty' => t('There are no vehicle models found in the db'),
+  );
+
+  $build['pager_pager'] = array('#theme' => 'pager');
+
+  return $build;
+}
+
+/**
+ * Page callback for vehicle/model/%vehicle_model.
+ *
+ * @param entity $model
+ *   The fully loaded vehicle_model entity.
+ */
+function vehicle_model_page($model) {
+  $title = isset($model->model_trim) ? $model->model_name . ' ' . $model->model_trim : $model->model_name;
+  drupal_set_title($title);
+
+  // Here we get the Vehicle Make referenced in the entity, check for aliases,
+  // and incorporate in the breadcrumbs for optimal SEO.
+  $vehicle_make = vehicle_make_load($model->make_id);
+  $vehicle_uri = entity_uri('vehicle_make', $vehicle_make);
+  $vehicle_alias = drupal_lookup_path('alias', $vehicle_uri['path']);
+  $vehicle_url = $vehicle_alias ? $vehicle_alias : $vehicle_uri['path'];
+
+  $breadcrumb = array();
+  $breadcrumb[] = l(t('Home'), NULL);
+  $breadcrumb[] = l(t('Vehicles'), 'vehicle');
+  $breadcrumb[] = l(t($vehicle_make->make_name), $vehicle_url);
+  drupal_set_breadcrumb($breadcrumb);
+
+  $build = array();
+
+  $build['term_heading'] = array(
+    '#prefix' => '<div class="term-listing-heading">',
+    '#suffix' => '</div>',
+    'make' => vehicle_model_view($model, 'full'),
+  );
+
+  return $build;
+}
+
+/**
+ * Builds Vehicle Model view.
+ *
+ * Includes hook for additional modules to expand functionality
+ * hook_vehicle_model_view_alter().
+ */
+function vehicle_model_view($entity, $view_mode = 'full', $langcode = NULL) {
+  if (!isset($langcode)) {
+    $langcode = $GLOBALS['language_content']->language;
+  }
+
+  field_attach_prepare_view('vehicle_model', array($entity->model_id => $entity), $view_mode, $langcode);
+  entity_prepare_view('vehicle_model', array($entity->model_id => $entity), $langcode);
+
+  $build = array(
+    '#model' => $entity->model_id,
+    '#model_name' => $entity->model_name,
+    '#view_mode' => $view_mode,
+    '#language' => $langcode,
+  );
+
+  $build += field_attach_view('vehicle_model', $entity, $view_mode, $langcode);
+
+  $type = 'vehicle_model';
+  drupal_alter(array('vehicle_model_view', 'entity_view'), $build, $type);
+
+  return $build;
+}
+
+/**
+ * Implements hook_field_extra_fields().
+ */
+function vehicle_model_field_extra_fields() {
+  $form_elements['model_name'] = array(
+    'label' => t('Model name'),
+    'description' => t('The model_name column from Full Model / Trim Data'),
+    'weight' => -34,
+  );
+  $form_elements['make_name'] = array(
+    'label' => t('Make'),
+    'description' => t('The associated Vehicle Make name'),
+    'weight' => -33,
+  );
+  $form_elements['model_trim'] = array(
+    'label' => t('Trim'),
+    'description' => t('The model_trim column from Full Model / Trim Data'),
+    'weight' => -32,
+  );
+  $form_elements['model_year_start'] = array(
+    'label' => t('Year Start'),
+    'description' => t('The model_year column from Full Model / Trim Data'),
+    'weight' => -31,
+  );
+  $form_elements['model_year_end'] = array(
+    'label' => t('Year End'),
+    'description' => t('The model_year column from Full Model / Trim Data'),
+    'weight' => -30,
+  );
+  $form_elements['model_body'] = array(
+    'label' => t('Body style'),
+    'description' => t('The model_body column from Full Model / Trim Data'),
+    'weight' => -29,
+  );
+  $display_elements['model_name'] = array(
+    'label' => t('Model name'),
+    'weight' => -34,
+  );
+  $display_elements['make_id'] = array(
+    'label' => t('Make'),
+    'weight' => -33,
+  );
+  $display_elements['model_trim'] = array(
+    'label' => t('Trim'),
+    'weight' => -32,
+  );
+  $display_elements['model_year_start'] = array(
+    'label' => t('Year Start'),
+    'weight' => -31,
+  );
+  $display_elements['model_year_end'] = array(
+    'label' => t('Year End'),
+    'weight' => -30,
+  );
+  $display_elements['model_body'] = array(
+    'label' => t('Body style'),
+    'weight' => -29,
+  );
+
+  // Since we have only one bundle type, we'll just provide the extra_fields
+  // for it here.
+  $extra_fields['vehicle_model']['vehicle_model_bundle']['form'] = $form_elements;
+  $extra_fields['vehicle_model']['vehicle_model_bundle']['display'] = $display_elements;
+
+  return $extra_fields;
+}
+
+/**
+ * Provides a wrapper on the edit form to add a new entity.
+ */
+function vehicle_model_add() {
+  // Create a vehicle_model entity structure to be used and passed to the
+  // validation and submission functions.
+  $entity = entity_get_controller('vehicle_model')->create();
+  return drupal_get_form('vehicle_model_form', $entity);
+}
+
+/**
+ * Form function to create a vehicle_model entity.
+ */
+function vehicle_model_form($form, &$form_state, $entity) {
+  if ($entity->make_id) {
+    $make = vehicle_make_load($entity->make_id);
+    $make_name = $make->make_name;
+  }
+  else {
+    $make_name = '';
+  }
+  $form['model_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Model name'),
+    '#required' => TRUE,
+    '#default_value' => $entity->model_name,
+    '#weight' => -34,
+  );
+  $form['make_name'] = array(
+    '#type' => 'textfield',
+    '#title' => l(t('Make'), 'admin/vehicle/make/'),
+    '#required' => TRUE,
+    '#autocomplete_path' => 'vehicle/make/autocomplete',
+    '#default_value' => $make_name,
+    '#weight' => -33,
+  );
+  $form['model_trim'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Trim'),
+    '#default_value' => $entity->model_trim,
+    '#weight' => -32,
+  );
+  $form['model_year_start'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Year Start'),
+    '#required' => TRUE,
+    '#default_value' => $entity->model_year_start,
+    '#weight' => -31,
+  );
+  $form['model_year_end'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Year End'),
+    '#required' => FALSE,
+    '#default_value' => $entity->model_year_end,
+    '#weight' => -30,
+  );
+  $form['model_body'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Body style'),
+    '#default_value' => $entity->model_body,
+    '#weight' => -29,
+  );
+
+  $form['model_entity'] = array(
+    '#type' => 'value',
+    '#value' => $entity,
+  );
+
+  field_attach_form('vehicle_model', $entity, $form, $form_state);
+
+  $form['save'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save'),
+    '#weight' => 100,
+  );
+  if ($entity->model_id) {
+    $form['delete'] = array(
+      '#type' => 'submit',
+      '#value' => t('Delete'),
+      '#submit' => array('vehicle_model_edit_delete'),
+      '#weight' => 200,
+    );
+  }
+  else {
+    $form['save_continue'] = array(
+      '#type' => 'submit',
+      '#value' => t('Save and add another'),
+      '#suffix' => l(t('Cancel'), 'admin/vehicle/model'),
+      '#weight' => 200,
+    );
+  }
+
+  return $form;
+}
+
+
+/**
+ * Validation handler for vehicle_model_add_form form.
+ *
+ * We pass things straight through to the Field API to handle validation
+ * of the attached fields.
+ */
+function vehicle_model_form_validate($form, &$form_state) {
+  field_attach_form_validate('vehicle_model', $form_state['values']['model_entity'], $form, $form_state);
+  $result = db_query('SELECT make_id FROM {vehicle_make} WHERE make_name = :name', array(':name' => $form_state['values']['make_name']));
+  $row = $result->fetchObject();
+  if ($row) {
+    $form_state['make_id'] = $row->make_id;
+  }
+  else {
+    form_set_error('make_name', t('This vehicle make is unknown.'));
+  }
+
+  // If the model_year_end value is not set use model_year_start.
+  if (!$form_state['values']['model_year_end']) {
+    $form_state['values']['model_year_end'] = $form_state['values']['model_year_start'];
+  }
+
+  // Check to make sure the model_year_end isn't before model_year_start.
+  if ($form_state['values']['model_year_start'] > $form_state['values']['model_year_end']) {
+    form_set_error('model_year_end', t('The model year end must not be before the start.'));
+  }
+}
+
+
+/**
+ * Form submit handler: submits vehicle_model_form information.
+ */
+function vehicle_model_form_submit($form, &$form_state) {
+  $entity = $form_state['values']['model_entity'];
+  $entity->make_id = $form_state['make_id'];
+  $entity->model_name = $form_state['values']['model_name'];
+  $entity->model_trim = $form_state['values']['model_trim'];
+  $entity->model_year_start = $form_state['values']['model_year_start'];
+  $entity->model_year_end = $form_state['values']['model_year_end'];
+  $entity->model_body = $form_state['values']['model_body'];
+  field_attach_submit('vehicle_model', $entity, $form, $form_state);
+  $entity = vehicle_model_save($entity);
+  drupal_set_message(t('The vehicle model %model has been saved', array('%model' => $entity->model_name)));
+
+  // Set the redirect based on the button clicked.
+  $array_parents = $form_state['triggering_element']['#array_parents'];
+  $submit_element = array_pop($array_parents);
+
+  if ($submit_element == 'save_continue') {
+    $form_state['redirect'] = 'admin/vehicle/model/add';
+  }
+  else {
+    $form_state['redirect'] = 'admin/vehicle/model';
+  }
+}
+
+/**
+ * Form deletion handler.
+ *
+ * @todo: 'Are you sure?' message.
+ */
+function vehicle_model_edit_delete($form, &$form_state) {
+  $entity = $form_state['values']['model_entity'];
+  vehicle_model_delete($entity);
+  drupal_set_message(t('The vehicle model (ID %id) has been deleted', array('%id' => $entity->model_id)));
+  $form_state['redirect'] = 'admin/vehicle/model';
+}
+
+/**
+ * We save the entity by calling the controller.
+ */
+function vehicle_model_save(&$entity) {
+  return entity_get_controller('vehicle_model')->save($entity);
+}
+
+/**
+ * Use the controller to delete the entity.
+ */
+function vehicle_model_delete($entity) {
+  entity_get_controller('vehicle_model')->delete($entity);
+}
+
+
+/**
+ * VehicleModelEntityControllerInterface definition
+ */
+interface VehicleModelEntityControllerInterface extends DrupalEntityControllerInterface {
+  /**
+   * Creates and returns a new vehicle_model entity.
+   */
+  public function create();
+
+  /**
+   * Saves the custom fields using drupal_write_record().
+   */
+  public function save($entity);
+
+  /**
+   * Deletes a single entity.
+   *
+   * @param int $entity
+   *   A single numeric entity ID.
+   */
+  public function delete($entity);
+}
+
+class VehicleModelEntityController extends DrupalDefaultEntityController implements VehicleModelEntityControllerInterface {
+  /**
+   * Creates and returns a new vehicle_model entity.
+   */
+  public function create() {
+    $entity = new stdClass();
+    $entity->type = 'vehicle_model';
+    $entity->model_id = 0;
+    $entity->bundle_type = 'vehicle_model_bundle';
+    $entity->make_id = 0;
+    $entity->model_year_start = '';
+    $entity->model_year_end = '';
+    $entity->model_name = '';
+    $entity->model_trim = '';
+    $entity->model_body = '';
+    return $entity;
+  }
+
+  /**
+   * Saves the custom fields using drupal_write_record().
+   */
+  public function save($entity) {
+    // If our entity has no model_id, then we need to give it a
+    // time of creation.
+    if (empty($entity->model_id)) {
+      $entity->created = time();
+    }
+    // Invoke hook_entity_presave().
+    module_invoke_all('entity_presave', $entity, 'vehicle_model');
+    // The 'primary_keys' argument determines whether this will be an insert
+    // or an update. So if the entity already has an ID, we'll specify
+    // model_id as the key.
+    $primary_keys = $entity->model_id ? 'model_id' : array();
+    // Write out the entity record.
+    drupal_write_record('vehicle_model', $entity, $primary_keys);
+    // We're going to invoke either hook_entity_update() or
+    // hook_entity_insert(), depending on whether or not this is a
+    // new entity. We'll just store the name of hook_entity_insert()
+    // and change it if we need to.
+    $invocation = 'entity_insert';
+    // Now we need to either insert or update the fields which are
+    // attached to this entity. We use the same primary_keys logic
+    // to determine whether to update or insert, and which hook we
+    // need to invoke.
+    if (empty($primary_keys)) {
+      field_attach_insert('vehicle_model', $entity);
+      // Integration with the pathauto module to create an alias.
+      if (module_exists('pathauto')) {
+        vehicle_model_create_alias($entity, 'insert');
+      }
+    }
+    else {
+      field_attach_update('vehicle_model', $entity);
+      $invocation = 'entity_update';
+      // Integration with the pathauto module to create an alias.
+      if (module_exists('pathauto')) {
+        vehicle_model_create_alias($entity, 'update');
+      }
+    }
+    // Invoke either hook_entity_update() or hook_entity_insert().
+    module_invoke_all($invocation, $entity, 'vehicle_model');
+    return $entity;
+  }
+
+  /**
+   * Deletes a single entity.
+   *
+   * Really a convenience function for deleteMultiple().
+   *
+   * @param int $entity
+   *   A single numeric entity ID.
+   */
+  public function delete($entity) {
+    $this->deleteMultiple(array($entity));
+  }
+
+  /**
+   * Delete one or more vehicle_model entities.
+   *
+   * Deletion is unfortunately not supported in the base
+   * DrupalDefaultEntityController class.
+   *
+   * @param int $entities
+   *   An array of entity IDs or a single numeric ID.
+   */
+  public function deleteMultiple($entities) {
+    $model_ids = array();
+    $entities = $entities ? $this->load($entities) : FALSE;
+    if (!empty($entities)) {
+      $transaction = db_transaction();
+      try {
+        foreach ($entities as $entity) {
+          module_invoke_all('vehicle_model_delete', $entity);
+          // Invoke hook_entity_delete().
+          module_invoke_all('entity_delete', $entity, 'vehicle_model');
+          field_attach_delete('vehicle_model', $entity);
+          $model_ids[] = $entity->model_id;
+        }
+        db_delete('vehicle_model')
+          ->condition('model_id', $model_ids, 'IN')
+          ->execute();
+
+      }
+      catch (Exception $e) {
+        $transaction->rollback();
+        watchdog_exception('vehicle_model', $e);
+        throw $e;
+      }
+    }
+  }
+}
+
+/**
+ * Pathauto Module integration
+ */
+
+/**
+ * Implements hook_pathauto().
+ */
+function vehicle_model_pathauto($op) {
+  $settings = new stdClass();
+  $settings->module = 'vehicle_model';
+  $settings->groupheader = t('Vehicle model paths');
+  $settings->patterndescr = t('Pattern for vehicle model paths');
+  $settings->patterndefault = 'vehicle/[vehicle_model:make-name]/[vehicle_model:name]/[vehicle_model:trim]';
+  $settings->token_type = 'vehicle_model';
+  $settings->batch_update_callback = 'vehicle_model_pathauto_bulkupdate';
+  return $settings;
+}
+
+/**
+ * Creates an alias using pathauto.
+ */
+function vehicle_model_create_alias(stdClass $entity, $op, array $options = array()) {
+  module_load_include('inc', 'pathauto');
+  $uri = entity_uri('vehicle_model', $entity);
+  pathauto_create_alias('vehicle_model', $op, $uri['path'], array('vehicle_model' => $entity));
+}
+
+/**
+ * Bulk update callback for pathauto.
+ */
+function vehicle_model_pathauto_bulkupdate() {
+  $model_entities = entity_load('vehicle_model', FALSE);
+
+  if (module_exists('pathauto')) {
+    foreach ($model_entities as $model) {
+      vehicle_model_create_alias($model, 'bulkupdate');
+    }
+  }
+
+  $count = count($model_entities);
+  if ($count == 1) {
+    drupal_set_message(t('1 vehicle model was updated.'));
+  }
+  else {
+    drupal_set_message(t('@count vehicle models were updated.', array('@count' => $count)));
+  }
+}
+
+/**
+ * Implements hook_path_alias_types().
+ *
+ * Bulk delete callback for pathauto.
+ */
+function vehicle_model_path_alias_types() {
+  $objects['vehicle/model/'] = t('Vehicle models');
+
+  return $objects;
+}
+
+/**
+ * Token Module integration
+ */
+
+/**
+ * Implements hook_token_info().
+ */
+function vehicle_model_token_info() {
+  $type = array(
+    'name' => t('Vehicle model'),
+    'description' => t('Tokens related to vehicle model.'),
+    'needs-data' => 'vehicle_model',
+  );
+
+  $vehicle_model['name'] = array(
+    'name' => t("Model name"),
+    'description' => t("The model name of the vehicle."),
+  );
+
+  $vehicle_model['make-name'] = array(
+    'name' => t("Model make name"),
+    'description' => t("The make of the vehicle."),
+  );
+
+  $vehicle_model['trim'] = array(
+    'name' => t("Model trim"),
+    'description' => t("The trim of the vehicle."),
+  );
+
+  return array(
+    'types' => array('vehicle_model' => $type),
+    'tokens' => array('vehicle_model' => $vehicle_model),
+  );
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function vehicle_model_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  $url_options = array('absolute' => TRUE);
+
+  if (isset($options['language'])) {
+    $url_options['language'] = $options['language'];
+    $language_code = $options['language']->language;
+  }
+  else {
+    $language_code = NULL;
+  }
+
+  $sanitize = !empty($options['sanitize']);
+
+  $replacements = array();
+
+  if ($type == 'vehicle_model' && !empty($data['vehicle_model'])) {
+    $vehicle_model = $data['vehicle_model'];
+
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'name':
+          $replacements[$original] = $sanitize ? check_plain($vehicle_model->model_name) : $vehicle_model->model_name;
+          break;
+
+        case 'make-name':
+          $make = vehicle_make_load($vehicle_model->make_id);
+          $replacements[$original] = $sanitize ? check_plain($make->make_name) : $make->make_name;
+          break;
+
+        case 'trim':
+          $replacements[$original] = $sanitize ? check_plain($vehicle_model->model_trim) : $vehicle_model->model_trim;
+          break;
+      }
+    }
+  }
+
+  return $replacements;
+}
+
+
+/***************************************************************
+ * Feeds Module integration
+ ***************************************************************/
+
+/**
+ * Implements hook_feeds_plugins().
+ */
+function vehicle_model_feeds_plugins() {
+  $info = array();
+  $info['VehicleModelProcessor'] = array(
+    'name' => 'Vehicle model processor',
+    'description' => 'Create vehicle models from parsed content.',
+    'handler' => array(
+      'parent' => 'FeedsProcessor',
+      'class' => 'VehicleModelProcessor',
+      'file' => 'vehicle_model.feeds.inc',
+      'path' => drupal_get_path('module', 'vehicle_model'),
+    ),
+  );
+  return $info;
+}
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function vehicle_model_ctools_plugin_directory($owner, $plugin) {
+  if ($owner == 'feeds_tamper') {
+    return 'plugins';
+  }
+}

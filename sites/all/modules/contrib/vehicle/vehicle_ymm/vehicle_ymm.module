@@ -1,0 +1,1039 @@
+<?php
+
+/**
+ * @file
+ * Year make and model selector field.
+ */
+
+/**
+ * Implements hook_field_info().
+ */
+function vehicle_ymm_field_info() {
+  $info = array(
+    'vehicle_ymm_reference' => array(
+      'label' => t('Vehicle reference'),
+      'description' => t('Reference a node to a vehicle make and/or model'),
+      'default_widget' => 'vehicle_ymm_dropdown',
+      'default_formatter' => 'vehicle_ymm_simple_text',
+    ),
+  );
+
+  // Support for Entity API's entity metadata wrappers.
+  if (module_exists('entity')) {
+    $info['vehicle_ymm_reference']['property_callbacks'] = array('vehicle_ymm_field_property_callback');
+    $info['vehicle_ymm_reference']['property_type'] = 'struct';
+  }
+
+  return $info;
+}
+
+/**
+ * Callback to provide property information via Entity API.
+ *
+ * @see https://drupal.org/node/1156554
+ */
+function vehicle_ymm_field_property_callback(&$info, $entity_type, $field, $instance, $field_type) {
+  $property = &$info[$entity_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
+  $property['getter callback'] = 'vehicle_ymm_field_getter_callback';
+}
+
+/**
+ * Getter callback for vehicle_ymm referenced makes, models.
+ */
+function vehicle_ymm_field_getter_callback($entity, array $options, $name, $entity_type, &$context) {
+  $langcode = isset($options['language']) ? $options['language']->language : LANGUAGE_NONE;
+  $langcode = entity_metadata_field_get_language($entity_type, $entity, $context['field'], $langcode, TRUE);
+  $return = array();
+  foreach ($entity->{$name}[$langcode] as $delta => $val) {
+    if (isset($val['make_id'])) {
+      $return[$delta]['make'] = entity_metadata_wrapper('vehicle_make', reset(entity_load('vehicle_make', array($val['make_id']))));
+    }
+    if (isset($val['model_id'])) {
+      $return[$delta]['model'] = entity_metadata_wrapper('vehicle_model', reset(entity_load('vehicle_model', array($val['model_id']))));
+    }
+  }
+  return (count($return) == 1) ? (object) reset($return) : $return;
+}
+
+/**
+ * Implements hook_field_instance_settings_form().
+ */
+function vehicle_ymm_field_instance_settings_form($field, $instance) {
+  $settings = $instance['settings'];
+
+  $form['model_required'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Model required'),
+    '#description' => t('If checked, the user must choose a model.'),
+    '#default_value' => !empty($settings['model_required']),
+  );
+
+  return $form;
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ *
+ * Adds an override to disable linking to the parent Make and Model entities.
+ */
+function vehicle_ymm_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $form['disable_parent_entity_link'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Disable linking to parent entity'),
+    '#description' => t('If checked, the field will not be linked to the parent Make and Model entities.'),
+    '#default_value' => !empty($settings['disable_parent_entity_link']),
+  );
+
+  return $form;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ *
+ * Describes the link override setting in the summary view.
+ */
+function vehicle_ymm_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $link_state = $settings['disable_parent_entity_link'] ? t('disabled') : t('enabled');
+
+  $summary = t('Linking: @state', array('@state' => $link_state));
+
+  return $summary;
+}
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function vehicle_ymm_field_formatter_info() {
+  return array(
+    'vehicle_ymm_simple_text' => array(
+      'label' => t('Make+Model simple text'),
+      'field types' => array('vehicle_ymm_reference'),
+      'settings' => array('disable_parent_entity_link' => FALSE),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function vehicle_ymm_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+
+  switch ($display['type']) {
+    case 'vehicle_ymm_simple_text':
+      foreach ($items as $delta => $item) {
+        $prefix = '';
+        $markup = '';
+        if ($item['make_id']) {
+          $make = vehicle_make_load($item['make_id']);
+          if ($display['settings']['disable_parent_entity_link']) {
+            // The user has elected to disable linking to parent entity.
+            $markup .= $make->make_name;
+          }
+          else {
+            // The default behaviour; link the field to the parent entity.
+            $uri = vehicle_make_uri($make);
+            $markup .= l($make->make_name, $uri['path']);
+          }
+        }
+        if ($item['model_id']) {
+          $model = vehicle_model_load($item['model_id']);
+          $prefix = ($model->model_year_start == $model->model_year_end) ? $model->model_year_start . ' ' : $model->model_year_start . '-' . $model->model_year_end . ' ';
+          if ($display['settings']['disable_parent_entity_link']) {
+            // The user has elected to disable linking to parent entity.
+            $markup .= ' ' . $model->model_name . ' ' . $model->model_trim;
+          }
+          else {
+            // The default behaviour; link the field to the parent entity.
+            $uri = vehicle_model_uri($model);
+            $markup .= ' ' . l($model->model_name . ' ' . $model->model_trim, $uri['path']);
+          }
+        }
+        $element[$delta] = array(
+          '#type' => 'markup',
+          '#markup' => $prefix . $markup,
+        );
+      }
+      break;
+  }
+
+  return $element;
+}
+
+/**
+ * Implements hook_field_widget_info().
+ */
+function vehicle_ymm_field_widget_info() {
+  return array(
+    'vehicle_ymm_dropdown' => array(
+      'label' => t('Year/Make/Model dropdown'),
+      'field types' => array('vehicle_ymm_reference'),
+    ),
+    'vehicle_mmy_dropdown' => array(
+      'label' => t('Year range model dropdown'),
+      'field types' => array('vehicle_ymm_reference'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function vehicle_ymm_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  $element += array('#delta' => $delta);
+
+  switch ($instance['widget']['type']) {
+    case 'vehicle_ymm_dropdown':
+      $parents = array_merge(array('input'), $element['#field_parents'], array($element['#field_name'], $langcode));
+      $value = drupal_array_get_nested_value($form_state, $parents);
+      if (empty($value)) {
+        $value = $items;
+      }
+      $current_make_id = isset($value[$delta]['make_id']) ? $value[$delta]['make_id'] : '';
+      $current_model_id = isset($value[$delta]['model_id']) ? $value[$delta]['model_id'] : '';
+      $current_year = isset($value[$delta]['year']) ? $value[$delta]['year'] : ($current_model_id ? _vehicle_ymm_select_existing_year($current_model_id) : '');
+      $current_model = $current_model_id ? _vehicle_ymm_select_existing_model($current_model_id) : '';
+
+      $element += array(
+        '#element_validate' => array('_vehicle_ymm_dropdown_validate'),
+        '#attached' => array(
+          'js' => array(drupal_get_path('module', 'vehicle_ymm') . '/vehicle_ymm.js'),
+          'css' => array(drupal_get_path('module', 'vehicle_ymm') . '/vehicle_ymm.css'),
+        ),
+      );
+      $element['year'] = array(
+        '#type' => 'select',
+        '#options' => _vehicle_ymm_build_year_menu(0),
+        '#attributes' => array('class' => array('vehicle-ymm-year')),
+        '#theme_wrappers' => array(),
+        '#default_value' => $current_year,
+      );
+      $element['make_id'] = array(
+        '#type' => 'select',
+        '#attributes' => array('class' => array('vehicle-ymm-make')),
+        '#options' => _vehicle_ymm_build_make_menu(0, $current_year),
+        '#theme_wrappers' => array(),
+        '#validated' => TRUE,
+        '#default_value' => $current_make_id,
+      );
+      $element['model'] = array(
+        '#type' => 'select',
+        '#attributes' => array('class' => array('vehicle-ymm-model')),
+        '#options' => _vehicle_ymm_build_model_menu(0, $current_year, $current_make_id),
+        '#theme_wrappers' => array(),
+        '#validated' => TRUE,
+        '#default_value' => $current_model,
+      );
+      $element['model_id'] = array(
+        '#type' => 'select',
+        '#attributes' => array('class' => array('vehicle-ymm-trim')),
+        '#options' => _vehicle_ymm_build_trim_menu(0, $current_year, $current_make_id, $current_model),
+        '#theme_wrappers' => array(),
+        '#validated' => TRUE,
+        '#default_value' => $current_model_id,
+      );
+      break;
+
+    case 'vehicle_mmy_dropdown':
+      $parents = array_merge(array('input'), $element['#field_parents'], array($element['#field_name'], $langcode));
+      $value = drupal_array_get_nested_value($form_state, $parents);
+      if (empty($value)) {
+        $value = $items;
+      }
+      $current_make_id = isset($value[$delta]['make_id']) ? $value[$delta]['make_id'] : '';
+      $current_model_id = isset($value[$delta]['model_id']) ? $value[$delta]['model_id'] : '';
+      $current_year = isset($value[$delta]['year']) ? $value[$delta]['year'] : ($current_model_id ? _vehicle_ymm_select_existing_year_range($current_model_id) : '');
+      $current_model = $current_model_id ? _vehicle_ymm_select_existing_model($current_model_id) : '';
+
+      $element += array(
+        '#type' => 'fieldset',
+        '#element_validate' => array('_vehicle_ymm_dropdown_validate'),
+        '#attached' => array(
+          'js' => array(drupal_get_path('module', 'vehicle_ymm') . '/vehicle_mmy.js'),
+          'css' => array(drupal_get_path('module', 'vehicle_ymm') . '/vehicle_ymm.css'),
+        ),
+      );
+      $element['make_id'] = array(
+        '#type' => 'select',
+        '#attributes' => array('class' => array('vehicle-ymm-make')),
+        '#options' => _vehicle_ymm_build_make_menu(0, 0),
+        '#theme_wrappers' => array(),
+        '#validated' => TRUE,
+        '#default_value' => $current_make_id,
+      );
+      $element['model'] = array(
+        '#type' => 'select',
+        '#attributes' => array('class' => array('vehicle-ymm-model')),
+        '#options' => _vehicle_ymm_build_model_menu(0, 99, $current_make_id),
+        '#theme_wrappers' => array(),
+        '#validated' => TRUE,
+        '#default_value' => $current_model,
+      );
+      $element['year'] = array(
+        '#type' => 'select',
+        '#options' => _vehicle_ymm_build_year_range_menu(0, $current_make_id, $current_model),
+        '#attributes' => array('class' => array('vehicle-ymm-year')),
+        '#theme_wrappers' => array(),
+        '#default_value' => $current_year,
+      );
+      $element['model_id'] = array(
+        '#type' => 'select',
+        '#attributes' => array('class' => array('vehicle-ymm-trim')),
+        '#options' => _vehicle_ymm_build_trim_menu(0, $current_year, $current_make_id, $current_model),
+        '#theme_wrappers' => array(),
+        '#validated' => TRUE,
+        '#default_value' => $current_model_id,
+      );
+      break;
+  }
+
+  $element['limit_selector'] = array(
+    '#type' => 'hidden',
+    '#attributes' => array('class' => array('vehicle-ymm-limit-selector')),
+    '#value' => 0,
+  );
+
+  if ($field['cardinality'] != 1) {
+    // If this is a multiple field widget, add the appropriate fields.
+    $element['remove_button'] = array(
+      '#name' => '_remove_button',
+      '#type' => 'markup',
+      '#markup' => '<a class="vehicle_ymm_remove_button button">Remove</a>',
+    );
+  }
+
+  return $element;
+}
+
+/**
+ * Custom element validation function for vehicle_ymm_dropdown.
+ */
+function _vehicle_ymm_dropdown_validate($element, &$form_state, $form) {
+  if ($form['form_id']['#value'] != 'field_ui_field_edit_form') {
+    $instance = field_widget_instance($element, $form_state);
+    $settings = $instance['settings'];
+    if ($instance['required'] && empty($element['make_id']['#value'])) {
+      form_error($element['make_id'], t('Vehicle make is required.'));
+    }
+    if (!empty($element['make_id']['#value']) && empty($element['model_id']['#value']) && $settings['model_required']) {
+      form_error($element['model_id'], t('Vehicle model is required.'));
+    }
+  }
+}
+
+/**
+ * Implements hook_field_is_empty().
+ */
+function vehicle_ymm_field_is_empty($item, $field) {
+  return (empty($item['make_id']) && $item['model_id'] == 0);
+}
+
+/**
+ * Implements hook_field_views_data().
+ */
+function vehicle_ymm_field_views_data($field) {
+  $data = field_views_field_default_views_data($field);
+
+  foreach ($data as $table_name => $table_data) {
+    foreach ($table_data as $field_name => $field_data) {
+      if (substr($field_name, -7) == 'make_id') {
+        $data[$table_name][$field_name]['relationship'] = array(
+          'title' => t('Referenced vehicle make'),
+          'help' => t('The vehicle make referenced through this field.'),
+          'base' => 'vehicle_make',
+          'base field' => 'make_id',
+          'handler' => 'views_handler_relationship',
+          'label' => t('Vehicle Make'),
+        );
+      }
+      elseif (substr($field_name, -8) == 'model_id') {
+        $data[$table_name][$field_name]['relationship'] = array(
+          'title' => t('Referenced vehicle model'),
+          'help' => t('The vehicle model referenced through this field.'),
+          'base' => 'vehicle_model',
+          'base field' => 'model_id',
+          'handler' => 'views_handler_relationship',
+          'label' => t('Vehicle Model'),
+        );
+      }
+    }
+  }
+
+  return $data;
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function vehicle_ymm_block_info() {
+  return array(
+    'selector' => array(
+      'info' => t('Vehicle Make/Model Selector'),
+      'cache' => DRUPAL_NO_CACHE,
+    ),
+  );
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function vehicle_ymm_block_view($delta = '') {
+  $block = array();
+
+  switch ($delta) {
+    case 'selector':
+      if (user_access('view any vehicle_make entity') && user_access('view any vehicle_model entity')) {
+        $block['subject'] = t('Vehicle Make/Model Selector');
+        $block['content'] = vehicle_ymm_selector();
+      }
+  }
+
+  return $block;
+}
+
+/**
+ * Inserts a form for navigating to a selected make/model.
+ */
+function vehicle_ymm_selector() {
+  return drupal_get_form('vehicle_ymm_selector_form');
+}
+
+/**
+ * Form function to create a selector for navigating to a particular make/model.
+ */
+function vehicle_ymm_selector_form($form, &$form_state) {
+  $current_limit_selector = vehicle_ymm_current_limit_selector();
+  $current_year = '';
+  $current_make_id = 0;
+  $current_model = '';
+  $current_model_id = 0;
+  if (arg(0) == 'vehicle') {
+    switch (arg(1)) {
+      case 'make':
+        $current_make_id = arg(2);
+        break;
+
+      case 'model':
+        $current_model_id = arg(2);
+        $model = vehicle_model_load($current_model_id);
+        $current_year = $model->model_year_start;
+        $current_make_id = $model->make_id;
+        $current_model = $model->model_name;
+    }
+  }
+  $form['ymm'] = array(
+    '#type' => 'fieldset',
+    '#attached' => array(
+      'js' => array(drupal_get_path('module', 'vehicle_ymm') . '/vehicle_ymm.js'),
+      'css' => array(drupal_get_path('module', 'vehicle_ymm') . '/vehicle_ymm.css'),
+    ),
+  );
+  $form['ymm']['year'] = array(
+    '#type' => 'select',
+    '#options' => _vehicle_ymm_build_year_menu($current_limit_selector),
+    '#attributes' => array('class' => array('vehicle-ymm-year')),
+    '#theme_wrappers' => array(),
+    '#default_value' => $current_year,
+  );
+  $form['ymm']['make_id'] = array(
+    '#type' => 'select',
+    '#attributes' => array('class' => array('vehicle-ymm-make')),
+    '#options' => _vehicle_ymm_build_make_menu($current_limit_selector, $current_year),
+    '#theme_wrappers' => array(),
+    '#validated' => TRUE,
+    '#default_value' => $current_make_id,
+  );
+  $form['ymm']['model'] = array(
+    '#type' => 'select',
+    '#attributes' => array('class' => array('vehicle-ymm-model')),
+    '#options' => _vehicle_ymm_build_model_menu($current_limit_selector, $current_year, $current_make_id),
+    '#theme_wrappers' => array(),
+    '#validated' => TRUE,
+    '#default_value' => $current_model,
+  );
+  $form['ymm']['model_id'] = array(
+    '#type' => 'select',
+    '#attributes' => array('class' => array('vehicle-ymm-trim')),
+    '#options' => _vehicle_ymm_build_trim_menu($current_limit_selector, $current_year, $current_make_id, $current_model),
+    '#theme_wrappers' => array(),
+    '#validated' => TRUE,
+    '#default_value' => $current_model_id,
+  );
+  $form['ymm']['limit_selector'] = array(
+    '#type' => 'hidden',
+    '#attributes' => array('class' => array('vehicle-ymm-limit-selector')),
+    '#value' => $current_limit_selector,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Go'),
+  );
+  return $form;
+}
+
+/**
+ * Implements hook_vehicle_ymm_destination_alter().
+ */
+function vehicle_ymm_vehicle_ymm_destination_alter(&$ymm) {
+  // Only set a URL if one isn't set by another module.
+  if (!isset($ymm['url'])) {
+    if ($ymm['model']) {
+      // If the model value is set, redirect to the specified model.
+      $ymm['url'] = 'vehicle/model/' . $ymm['model'];
+    }
+    elseif ($ymm['make']) {
+      // If the user has not selected a model, redirect elsewhere.
+      if ($ymm['year'] && module_exists('views') && views_get_view('vehicles_by_year_and_make')) {
+        // Redirect to all results for the specified year and make.
+        $ymm['url'] = 'vehicles-by-year-and-make/' . $ymm['year'] . '/' . $ymm['make'];
+      }
+      else {
+        // Redirect to the base make page.
+        $ymm['url'] = 'vehicle/make/' . $ymm['make'];
+      }
+    }
+  }
+
+  return $ymm;
+}
+
+/**
+ * Redirects to the requested make/model.
+ */
+function vehicle_ymm_selector_form_submit($form, &$form_state) {
+  // Build the array of returned form options to pass.
+  $ymm = array(
+    'make' => $form_state['values']['make_id'],
+    'model' => $form_state['values']['model_id'],
+    'year' => $form_state['values']['year'],
+  );
+
+  // Allows other modules to use to customize the destination.
+  // @see hook_vehicle_ymm_destination_alter().
+  drupal_alter('vehicle_ymm_destination', $ymm);
+  if ($ymm['url']) {
+    drupal_goto($ymm['url']);
+  }
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function vehicle_ymm_views_api() {
+  return array(
+    'api' => 3,
+  );
+}
+
+/**
+ * Implements hook_node_views_pre_render().
+ */
+function vehicle_ymm_views_pre_render(&$view) {
+  if ($view->name == 'vehicles_by_year_and_make' && $view->current_display == 'page') {
+    $make = vehicle_make_load(arg(2));
+    if ($make) {
+      $view->build_info['title'] = arg(1) . ' ' . $make->make_name;
+    }
+  }
+}
+
+/***************************************************************
+ * Keep an index of all nodes tagged for easy fast access
+ * (these methods are mostly ripped from the Taxonomy module)
+ ***************************************************************/
+
+/**
+ * Implements hook_node_update().
+ */
+function vehicle_ymm_node_update($node) {
+  _vehicle_ymm_delete_node_index($node);
+  _vehicle_ymm_build_node_index($node);
+}
+
+/**
+ * Implements hook_node_delete().
+ */
+function vehicle_ymm_node_delete($node) {
+  _vehicle_ymm_delete_node_index($node);
+}
+
+/**
+ * Implements hook_node_insert().
+ */
+function vehicle_ymm_node_insert($node) {
+  _vehicle_ymm_build_node_index($node);
+}
+
+/**
+ * Inserts vehicle_ymm_index row based on node's vehicle_ymm_reference fields.
+ */
+function _vehicle_ymm_build_node_index($node) {
+  if (!empty($node->original)) {
+    $status = (int) (!empty($node->status) || (!isset($node->status) && !empty($node->original->status)));
+    $sticky = (int) (!empty($node->sticky) || (!isset($node->sticky) && !empty($node->original->sticky)));
+  }
+  else {
+    $status = (int) (!empty($node->status));
+    $sticky = (int) (!empty($node->sticky));
+  }
+
+  // We only maintain the index for published nodes.
+  if ($status) {
+    // Collect a list of unique make id's, and a list of unique model id's.
+    $make_id_all = array();
+    $model_id_all = array();
+    foreach (field_info_instances('node', $node->type) as $instance) {
+      $field_name = $instance['field_name'];
+      $field = field_info_field($field_name);
+      if ($field['module'] == 'vehicle_ymm' && $field['storage']['type'] == 'field_sql_storage') {
+        // If a field value is not set in the node object when node_save() is
+        // called, the old value from $node->original is used.
+        if (isset($node->{$field_name})) {
+          $items = $node->{$field_name};
+        }
+        elseif (isset($node->original->{$field_name})) {
+          $items = $node->original->{$field_name};
+        }
+        else {
+          continue;
+        }
+
+        foreach (field_available_languages('node', $field) as $langcode) {
+          if (!empty($items[$langcode])) {
+            foreach ($items[$langcode] as $item) {
+              if ($item['model_id']) {
+                $model_id_all[$item['model_id']] = array('make_id' => $item['make_id'], 'model_id' => $item['model_id']);
+              }
+              else {
+                $make_id_all[$item['make_id']] = $item['make_id'];
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Insert index entries for all the node's vehicle_ymm_reference fields.
+    if (!empty($make_id_all)) {
+      $query = db_insert('vehicle_ymm_index')->fields(array(
+        'nid',
+        'make_id',
+        'model_id',
+        'sticky',
+        'created',
+      ));
+      foreach ($make_id_all as $make_id) {
+        $query->values(array(
+          'nid' => $node->nid,
+          'make_id' => $make_id,
+          'model_id' => 0,
+          'sticky' => $sticky,
+          'created' => $node->created,
+        ));
+      }
+
+      $query->execute();
+    }
+    if (!empty($model_id_all)) {
+      $query = db_insert('vehicle_ymm_index')->fields(array(
+        'nid',
+        'make_id',
+        'model_id',
+        'sticky',
+        'created',
+      ));
+      foreach ($model_id_all as $make_model) {
+        $query->values(array(
+          'nid' => $node->nid,
+          'make_id' => $make_model['make_id'],
+          'model_id' => $make_model['model_id'],
+          'sticky' => $sticky,
+          'created' => $node->created,
+        ));
+      }
+
+      $query->execute();
+    }
+  }
+}
+
+/**
+ * Deletes any vehicle_ymm_index rows associated with the given node.
+ */
+function _vehicle_ymm_delete_node_index($node) {
+  db_delete('vehicle_ymm_index')->condition('nid', $node->nid)->execute();
+}
+
+/**
+ * Alters the Vehicle Make page to include tagged content list.
+ */
+function vehicle_ymm_vehicle_make_view_alter(&$build, $type) {
+  // @todo RSS feed!
+  drupal_add_feed('vehicle/make/' . $build['#make'] . '/feed', 'RSS - ' . $build['#make_name']);
+
+  $query = db_select('vehicle_ymm_index', 'i');
+  $query->fields('i', array('nid'))
+    ->condition('i.make_id', $build['#make'], '=');
+  $return = $query->execute();
+
+  $matches = array();
+
+  foreach ($return as $row) {
+    $matches[] = $row->nid;
+  }
+
+  $nodes = node_load_multiple($matches);
+
+  // Check access to each node before we display it.
+  foreach ($nodes as $node_key => $node) {
+    if (!node_access('view', $node)) {
+      unset($nodes[$node_key]);
+    }
+  }
+
+  if (count($nodes) > 0) {
+    $build += node_view_multiple($nodes);
+  }
+
+  if (empty($matches)) {
+    $build['content'] = array(
+      '#prefix' => '<p>',
+      '#markup' => t('There is currently no content classified with this vehicle make.'),
+      '#suffix' => '</p>',
+    );
+  }
+}
+
+/**
+ * Alter the Vehicle Model page to include tagged content list.
+ */
+function vehicle_ymm_vehicle_model_view_alter(&$build, $type) {
+  // @todo RSS feed!
+  drupal_add_feed('vehicle/model/' . $build['#model'] . '/feed', 'RSS - ' . $build['#model_name']);
+
+  $query = db_select('vehicle_ymm_index', 'i');
+  $query->fields('i', array('nid'))
+    ->condition('i.model_id', $build['#model'], '=');
+  $return = $query->execute();
+
+  $matches = array();
+
+  foreach ($return as $row) {
+    $matches[] = $row->nid;
+  }
+
+  $nodes = node_load_multiple($matches);
+
+  // Check access to each node before we display it.
+  foreach ($nodes as $node_key => $node) {
+    if (!node_access('view', $node)) {
+      unset($nodes[$node_key]);
+    }
+  }
+
+  if (count($nodes) > 0) {
+    $build += node_view_multiple($nodes);
+  }
+
+  if (empty($matches)) {
+    $build['content'] = array(
+      '#prefix' => '<p>',
+      '#markup' => t('There is currently no content classified with this vehicle model.'),
+      '#suffix' => '</p>',
+    );
+  }
+}
+
+/**
+ * Prepopulate the year drop down menu.
+ */
+function _vehicle_ymm_build_year_menu($limit_selector) {
+  $matches = array('Year');
+
+  $query = db_select('vehicle_model', 'v');
+  if ($limit_selector) {
+    $query->join('vehicle_ymm_index', 'i', 'v.model_id = i.model_id');
+  }
+  $return = $query->distinct()
+    ->fields('v', array('model_year_start', 'model_year_end'))
+    ->extend('TableSort')
+    ->orderBy('model_year_start', 'DESC')
+    ->execute();
+
+  foreach ($return as $row) {
+    // We need to split year ranges into separate rows.
+    while (check_plain($row->model_year_start) <= check_plain($row->model_year_end)) {
+      $matches[$row->model_year_start] = check_plain($row->model_year_start);
+      $row->model_year_start++;
+    }
+  }
+
+  return $matches;
+}
+
+/**
+ * Prepopulate the year range drop down menu.
+ */
+function _vehicle_ymm_build_year_range_menu($limit_selector, $make, $model) {
+  $matches = array('Year');
+
+  $query = db_select('vehicle_model', 'v');
+  if ($limit_selector) {
+    $query->join('vehicle_ymm_index', 'i', 'v.model_id = i.model_id');
+  }
+  $return = $query->distinct()
+    ->fields('v', array('model_year_start', 'model_year_end'))
+    ->condition('v.model_name', $model, '=')
+    ->condition('v.make_id', $make, '=')
+    ->execute();
+
+  foreach ($return as $row) {
+    if (check_plain($row->model_year_start) == check_plain($row->model_year_end)) {
+      $imploded_year_range = check_plain($row->model_year_start);
+    }
+    else {
+      $imploded_year_range = check_plain($row->model_year_start) . '-' . check_plain($row->model_year_end);
+    }
+    $matches[check_plain($row->model_year_start) . '-' . check_plain($row->model_year_end)] = $imploded_year_range;
+  }
+
+  ksort($matches);
+
+  return $matches;
+}
+
+/**
+ * Select an existing year from the model database.
+ */
+function _vehicle_ymm_select_existing_year($model) {
+  $result = db_query("SELECT model_year_start FROM {vehicle_model} WHERE model_id = '" . $model . "'");
+  return $result->fetchObject()->model_year_start;
+}
+
+/**
+ * Select an existing year range from the model database.
+ */
+function _vehicle_ymm_select_existing_year_range($model) {
+  $result = db_query("SELECT model_year_start, model_year_end FROM {vehicle_model} WHERE model_id = '" . $model . "'")
+    ->fetchObject();
+  return $result->model_year_start . '-' . $result->model_year_end;
+}
+
+/**
+ * Build the make menu.
+ */
+function _vehicle_ymm_build_make_menu($limit_selector, $year) {
+  $matches = array('Make');
+
+  $query = db_select('vehicle_make', 'v');
+  if ($limit_selector) {
+    $query->join('vehicle_ymm_index', 'i', 'v.make_id = i.make_id');
+  }
+  if ($year) {
+    $query->join('vehicle_model', 'm', 'v.make_id = m.make_id');
+    $query->fields('v', array('make_id', 'make_name'))
+      ->condition('m.model_year_start', $year, '<=')
+      ->condition('m.model_year_end', $year, '>=');
+  }
+  else {
+    $query->fields('v', array('make_id', 'make_name'));
+  }
+  $return = $query->extend('TableSort')
+      ->orderBy('make_name', 'ASC')
+      ->execute();
+
+  foreach ($return as $row) {
+    $matches[$row->make_id] = check_plain($row->make_name);
+  }
+
+  return $matches;
+}
+
+/**
+ * Build the model menu.
+ */
+function _vehicle_ymm_build_model_menu($limit_selector, $year, $make) {
+  if (!$year || !$make) {
+    return array('Model');
+  }
+
+  $matches = array();
+
+  $query = db_select('vehicle_model', 'm');
+
+  if ($limit_selector) {
+    $query->join('vehicle_ymm_index', 'i', 'm.model_id = i.model_id');
+  }
+
+  $query->fields('m', array('model_name'))
+    ->condition('m.make_id', $make, '=');
+
+  if ($year >= 100) {
+    $query->condition('m.model_year_start', $year, '<=')
+      ->condition('m.model_year_end', $year, '>=');
+  }
+
+  $return = $query->extend('TableSort')
+      ->orderBy('model_name', 'ASC')
+      ->distinct()
+      ->execute();
+
+  $matches[] = 'Model';
+
+  foreach ($return as $row) {
+    $matches[$row->model_name] = check_plain($row->model_name);
+  }
+
+  return $matches;
+}
+
+/**
+ * Select an existing model from the database.
+ */
+function _vehicle_ymm_select_existing_model($model) {
+  $result = db_query("SELECT model_name FROM {vehicle_model} WHERE model_id = '" . $model . "'");
+
+  return $result->fetchObject()->model_name;
+}
+
+/**
+ * Build the trim menu.
+ */
+function _vehicle_ymm_build_trim_menu($limit_selector, $year, $make, $model) {
+  if (!$make || !$model) {
+    return array('Trim');
+  }
+
+  $year_range = explode('-', $year);
+
+  $matches = array();
+
+  $query = db_select('vehicle_model', 'm');
+  if ($limit_selector) {
+    $query->join('vehicle_ymm_index', 'i', 'm.model_id = i.model_id');
+  }
+  $query->fields('m', array('model_id', 'model_trim'))
+    ->condition('m.make_id', $make, '=')
+    ->condition('m.model_name', $model, '=');
+  if ($year_range[0] >= 100) {
+    $query->condition('m.model_year_start', $year_range[0], isset($year_range[1]) ? '=' : '<=')
+      ->condition('m.model_year_end', isset($year_range[1]) ? $year_range[1] : $year_range[0], isset($year_range[1]) ? '=' : '>=');
+  }
+  $return = $query->extend('TableSort')
+      ->orderBy('model_trim', 'ASC')
+      ->distinct()
+      ->execute();
+
+  if (!$return->rowCount()) {
+    $matches[] = 'Trim';
+  }
+
+  foreach ($return as $row) {
+    if (!$row->model_trim) {
+      $row->model_trim = "None";
+    }
+    $matches[$row->model_id] = check_plain($row->model_trim);
+  }
+
+  return $matches;
+}
+
+/**
+ * Implements hook_menu().
+ */
+function vehicle_ymm_menu() {
+  $items['admin/vehicle/ymm'] = array(
+    'title' => 'Vehicle year/make/model selector settings',
+    'description' => 'Configure settings for the vehicle year/make/model selector.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('vehicle_ymm_settings_form'),
+    'access arguments' => array('administer vehicle_ymm settings'),
+  );
+  $items['vehicle/ymm/%/%/make'] = array(
+    'page callback' => '_vehicle_ymm_make_dropdown',
+    'page arguments' => array(2, 3),
+    'access callback' => TRUE,
+  );
+  $items['vehicle/ymm/%/%/%/model'] = array(
+    'page callback' => '_vehicle_ymm_model_dropdown',
+    'page arguments' => array(2, 3, 4),
+    'access callback' => TRUE,
+  );
+  $items['vehicle/ymm/%/%/%/%/trim'] = array(
+    'page callback' => '_vehicle_ymm_trim_dropdown',
+    'page arguments' => array(2, 3, 4, 5),
+    'access callback' => TRUE,
+  );
+  $items['vehicle/ymm/%/%/%/years'] = array(
+    'page callback' => '_vehicle_ymm_year_range_dropdown',
+    'page arguments' => array(2, 3, 4),
+    'access callback' => TRUE,
+  );
+
+  return $items;
+}
+
+/**
+ * Form callback: vehicle year/make/model settings form.
+ */
+function vehicle_ymm_settings_form($form, &$form_state) {
+  $form['vehicle_ymm_limit_selector'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Limit selector to options with tagged content'),
+    '#default_value' => vehicle_ymm_current_limit_selector(),
+  );
+  return system_settings_form($form);
+}
+
+/**
+ * Returns the value of 'Limit selector to options with tagged content'.
+ */
+function vehicle_ymm_current_limit_selector() {
+  return variable_get('vehicle_ymm_limit_selector', 0);
+}
+
+/**
+ * Implements hook_permission().
+ */
+function vehicle_ymm_permission() {
+  $permissions = array(
+    'administer vehicle_ymm settings' => array(
+      'title' => t('Administer vehicle year/make/model selector settings'),
+    ),
+  );
+  return $permissions;
+}
+
+/**
+ * JSON output to build Make dropdown.
+ */
+function _vehicle_ymm_make_dropdown($limit_selector, $year) {
+  drupal_json_output(_vehicle_ymm_build_make_menu($limit_selector, $year));
+}
+
+/**
+ * JSON output to build Model dropdown.
+ */
+function _vehicle_ymm_model_dropdown($limit_selector, $year, $make) {
+  drupal_json_output(_vehicle_ymm_build_model_menu($limit_selector, $year, $make));
+}
+
+/**
+ * JSON output to build Trim dropdown.
+ */
+function _vehicle_ymm_trim_dropdown($limit_selector, $year, $make, $model) {
+  drupal_json_output(_vehicle_ymm_build_trim_menu($limit_selector, $year, $make, $model));
+}
+
+/**
+ * JSON output to build Year Range dropdown.
+ */
+function _vehicle_ymm_year_range_dropdown($limit_selector, $make, $model) {
+  drupal_json_output(_vehicle_ymm_build_year_range_menu($limit_selector, $make, $model));
+}
