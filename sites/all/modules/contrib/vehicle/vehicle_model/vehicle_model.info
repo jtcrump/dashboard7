@@ -1,0 +1,14 @@
+name = Vehicle Model
+package = Vehicle
+description = Provides basic Vehicle Model entity.
+core = 7.x
+
+dependencies[] = vehicle
+dependencies[] = vehicle_make
+
+; Information added by Drupal.org packaging script on 2015-01-09
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "vehicle"
+datestamp = "1420833781"
+

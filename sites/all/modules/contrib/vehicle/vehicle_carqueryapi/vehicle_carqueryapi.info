@@ -1,0 +1,14 @@
+name = Vehicle CarQuery API
+package = Vehicle
+description = Allows for easy interfacing between the CarQuery API database and the Vehicle module.
+core = 7.x
+
+dependencies[] = vehicle_make
+dependencies[] = vehicle_model
+
+; Information added by Drupal.org packaging script on 2015-01-09
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "vehicle"
+datestamp = "1420833781"
+

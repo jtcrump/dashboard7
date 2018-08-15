@@ -1,0 +1,10 @@
+<?php
+
+/**
+ * @file
+ * Provides extra fields to support easy importing of CarQuery database.
+ * http://www.carqueryapi.com/download/
+ *
+ * @todo Feeds integration to import downloaded CSV file.
+ * @todo Integrate with CarQuery JSON API so no CSV purchase is required.
+ */

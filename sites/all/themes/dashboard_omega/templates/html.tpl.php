@@ -58,14 +58,26 @@
   <title><?php print $head_title; ?></title>
   <?php print $styles; ?>
   <?php print $scripts; ?>
+
+
+<style>
+.inner-logo {margin-left: 10%;margin-top: -550px;z-index: 2;position: relative;max-width: 500px;float: left;display: block;}
+.inner-logo img {max-width: 500px;}
+#regForm {margin-top: 0px !important;} 
+@media (min-width:1200px){
+#regForm {z-index: 2;position: relative;max-width: 500px;float: right;display: block;margin-top: -580px !important;margin-right: 10% !important;}
+}
+.field--name-field-dealership-logo {top: 0;width: 100%;height: 80px;background-color: white;position:absolute; z-index: 2;}
+</style>
 </head>
 <body<?php print $attributes;?>>
   <a href="#main-content" class="element-invisible element-focusable"><?php print t('Skip to main content'); ?></a>
 
-
+ 
   <?php print $page_top; ?>
   <?php print $page; ?>
   <?php print $page_bottom; ?>
+
 
 
 

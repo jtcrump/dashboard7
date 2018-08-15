@@ -16,10 +16,25 @@
 
 function dashboard_omega_preprocess_views_view(&$vars) {
 $view = $vars['view'];
-
-	if($view->name == 'theme') {
+	if($view->name == 'get_mail_recipient') {
 		if($view->current_display == 'block'){
+$_SESSION['fname'] = $view->result[0]->{'node/fname'};
+$_SESSION['lname'] = $view->result[0]->{'node/lname'};
+$_SESSION['address'] = $view->result[0]->{'node/address'};
+$_SESSION['city'] = $view->result[0]->{'node/city'};
+$_SESSION['state'] = $view->result[0]->{'node/state'};
+$_SESSION['zip'] = $view->result[0]->{'node/zip'};
 
+$_SESSION['sid'] = $view->result[0]->{'node/sid'};
+$_SESSION['PropName'] = $view->result[0]->{'node/PropName'};
+$_SESSION['PropAddress'] = $view->result[0]->{'PropAddress'};
+$_SESSION['PropCity'] = $view->result[0]->{'node/PropCity'};
+$_SESSION['PropState'] = $view->result[0]->{'node/PropState'};
+$_SESSION['PropZip'] = $view->result[0]->{'PropZip'};
+
+// print "<pre>";
+// print_r($view->result[0]);
+// print "</pre>";
 		}
 	}
 }

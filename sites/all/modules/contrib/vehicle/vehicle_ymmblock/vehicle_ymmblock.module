@@ -1,0 +1,312 @@
+<?php
+
+/**
+ * @file
+ * Hierarchical display of year make and models in block.
+ */
+
+/**
+ * Implements hook_block_info().
+ */
+function vehicle_ymmblock_block_info() {
+  $blocks['vehicle_ymmblock'] = array(
+    'info' => t('Hierarchical display of year make and models.'),
+    'cache' => DRUPAL_CACHE_PER_ROLE,
+    'status' => TRUE,
+    'region' => 'sidebar_first',
+    'visibility' => BLOCK_VISIBILITY_LISTED,
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function vehicle_ymmblock_block_view($delta = '') {
+  // The $delta parameter tells us which block is being requested.
+  switch ($delta) {
+    case 'vehicle_ymmblock':
+      $block['subject'] = t('Vehicles');
+      $block['content'] = array(
+        '#theme' => 'vehicle_ymm_block',
+        '#path' => drupal_get_path_alias(),
+      );
+      break;
+  }
+  return $block;
+}
+
+/**
+ * Implements hook_block_configure().
+ *
+ * Customize the format of the YMM Block.
+ */
+function vehicle_ymmblock_block_configure($delta = '') {
+  $form = array();
+  // The $delta parameter tells us which block is being requested.
+  switch ($delta) {
+    case 'vehicle_ymmblock':
+      // All we need to provide is the specific configuration options for our
+      // block. Drupal will take care of the standard block configuration options
+      // (block title, page visibility, etc.) and the save button.
+      $form['block_vehicleymm_display'] = array(
+        '#type' => 'select',
+        '#title' => t('Display Mode'),
+        '#description' => t('How the Y/M/M block is displayed.'),
+        '#options' => array(
+          'YMM' => t('Year > Make > Model'),
+          'MMY' => t('Make > Model > Year'),
+        ),
+        '#default_value' => variable_get('block_vehicleymm_display'),
+      );
+      break;
+  }
+  return $form;
+}
+
+/**
+ * Implements hook_block_save().
+ *
+ * This hook declares how the configured options for a block
+ * provided by this module are saved.
+ */
+function vehicle_ymmblock_block_save($delta = '', $edit = array()) {
+  // The $delta parameter tells us which block is being requested.
+  switch ($delta) {
+    case 'vehicle_ymmblock':
+      // Have Drupal save the string to the database.
+      variable_set('block_vehicleymm_display', $edit['block_vehicleymm_display']);
+      break;
+  }
+  return;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function vehicle_ymmblock_theme($existing, $type, $theme, $path) {
+  return array(
+    'vehicle_ymm_block' => array(
+      'template' => 'vehicle_ymm_block',
+      'variables' => array('path' => ''),
+      'preprocess functions' => array('template_preprocess', 'template_preprocess_ymmblock'),
+      'path' => drupal_get_path('module', 'vehicle_ymmblock') . '/templates',
+    ),
+  );
+}
+
+/**
+ * Implements template_preprocess_ymmblock().
+ *
+ * @todo Pass other variables here to make custom theming easier.
+ */
+function template_preprocess_ymmblock(&$variables, $hook) {
+  $items = array();
+  $list = array();
+
+  $query = new EntityFieldQuery();
+  
+  // The user has selected the Make > Model > Year format.
+  if (variable_get('block_vehicleymm_display') && variable_get('block_vehicleymm_display')=='YMM') {
+    $year_list = _vehicle_ymm_build_year_menu(0);
+    // Remove the first row in the array since it is just the select field title.
+    unset($year_list[0]);
+    // Loop through each year and build the submenu.
+    foreach ($year_list as $year) {
+      $make_list = _vehicle_ymm_build_make_menu(0, $year);
+      unset($make_list[0]);
+      $make_menu = array();
+      // Loop through each make and build the submenu.
+      foreach ($make_list as $makeid => $make) {
+        $model_list = _vehicle_ymm_build_model_menu(0, $year, $makeid);
+        unset($model_list[0]);
+        $model_menu = array();
+        // Loop through each model and build the submenu.
+        foreach ($model_list as $model) {
+          $trim_list = _vehicle_ymm_build_trim_menu(0, $year, $makeid, $model);
+          unset($trim_list[0]);
+          $trim_menu = array();
+          // Loop through each trim level and build the submenu.
+          foreach ($trim_list as $modelid => $trim) {
+            $trim_menu[$trim] = '<a href="/' . drupal_get_path_alias('vehicle/model/' . $modelid) . '">' . $trim . '</a>';
+          }
+          if ($trim_menu) {
+            // There are trim levels so add these as children.
+            $model_menu[$model] = array(
+              'data' => '<a href="#" class="sublevels">' . $model . '</a>',
+              'children' => $trim_menu,
+            );
+          }
+          else {
+            // There is no trim level so don't add children.
+            $model_menu[$model] = array(
+              'data' => '<a href="#">' . $model . '</a>',
+            );
+          }
+        }
+
+        $make_menu[$make] = array(
+          'data' => '<a href="#" class="sublevels">' . $make . '</a>',
+          'children' => $model_menu,
+        );
+      }
+
+      $items[$year] = array(
+        'data' => '<a href="#" class="sublevels">' . $year . '</a>',
+        'children' => $make_menu,
+      );
+    }
+  }
+  // The user has either not selected a format or has kept the default selection.
+  else {
+    $query->entityCondition('entity_type', 'vehicle_make')
+      ->propertyOrderBy('make_name');
+
+    $make_query = $query->execute();
+
+    if (isset($make_query['vehicle_make'])) {
+      $make_nids = array_keys($make_query['vehicle_make']);
+      $make_entities = entity_load('vehicle_make', $make_nids);
+    }
+
+    foreach ($make_entities as $make) {
+      $model_items = array();
+      $model_list = array();
+
+      $query = new EntityFieldQuery();
+
+      $query->entityCondition('entity_type', 'vehicle_model')
+        ->propertyCondition('make_id', $make->make_id)
+        ->propertyOrderBy('model_name');
+
+      $model_query = $query->execute();
+
+      if (isset($model_query['vehicle_model'])) {
+        $model_nids = array_keys($model_query['vehicle_model']);
+        $model_entities = entity_load('vehicle_model', $model_nids);
+
+        foreach ($model_entities as $model) {
+          $model_items[$model->model_name][] = $model->model_trim;
+        }
+
+        foreach (array_keys($model_items) as $model_entity) {
+          $trim_items = array();
+
+          // Compile the list of trim levels.
+          foreach ($model_items[$model_entity] as $trim_entity) {
+            $year_items = array();
+
+            if ($trim_entity) {
+              $query = new EntityFieldQuery();
+
+              $query->entityCondition('entity_type', 'vehicle_model')
+                ->propertyCondition('make_id', $make->make_id)
+                ->propertyCondition('model_trim', $trim_entity)
+                ->propertyOrderBy('model_year_start');
+
+              $year_query = $query->execute();
+
+              if (isset($year_query['vehicle_model'])) {
+                $year_nids = array_keys($year_query['vehicle_model']);
+                $year_entities = entity_load('vehicle_model', $year_nids);
+
+                foreach ($year_entities as $years) {
+                  if ($years->model_year_start == $years->model_year_end || !$years->model_year_end) {
+                    $year_print = $years->model_year_start;
+                  }
+                  else {
+                    $year_print = $years->model_year_start . '-' . $years->model_year_end;
+                  }
+                  $year_items[$years->model_id] = '<a href="/' . drupal_get_path_alias('vehicle/model/' . $years->model_id) . '">' . $year_print . '</a>';
+                }
+              }
+
+              $trim_items[] = array(
+                'data' => '<a href="#" class="sublevels">' . $trim_entity . '</a>',
+                'children' => $year_items,
+              );
+            }
+            else {
+              $query = new EntityFieldQuery();
+
+              $query->entityCondition('entity_type', 'vehicle_model')
+                ->propertyCondition('make_id', $make->make_id)
+                ->propertyCondition('model_name', $model_entity)
+                ->propertyOrderBy('model_year_start');
+
+              $year_query = $query->execute();
+
+              if (isset($year_query['vehicle_model'])) {
+                $year_nids = array_keys($year_query['vehicle_model']);
+                $year_entities = entity_load('vehicle_model', $year_nids);
+
+                foreach ($year_entities as $years) {
+                  if ($years->model_year_start == $years->model_year_end || !$years->model_year_end) {
+                    $year_print = $years->model_year_start;
+                  }
+                  else {
+                    $year_print = $years->model_year_start . '-' . $years->model_year_end;
+                  }
+                  $year_items[$years->model_id] = '<a href="/' . drupal_get_path_alias('vehicle/model/' . $years->model_id) . '">' . $year_print . '</a>';
+                }
+              }
+
+              $trim_items = $year_items;
+            }
+          }
+
+          if ($trim_items) {
+            // There are trim levels so add these as children.
+            $model_list[] = array(
+              'data' => '<a href="#" class="sublevels">' . $model_entity . '</a>',
+              'children' => $trim_items,
+            );
+          }
+          else {
+            // There is no trim level so don't add children.
+            $model_list[] = array(
+              'data' => '<a href="#">' . $model_entity . '</a>',
+            );
+          }
+        }
+
+        $items[$make->make_id] = array(
+          'data' => '<a href="#" class="sublevels">' . $make->make_name . '</a>',
+          'children' => $model_list,
+        );
+      }
+    }
+  }
+
+  $list['title'] = '';
+  $list['type'] = 'ul';
+  $list['attributes'] = array('class' => 'vehicle-ymm-block');
+  $list['items'] = $items;
+
+  $variables['ymm_list'] = $list;
+}
+
+/**
+ * Implements hook_theme_registry_alter().
+ */
+function vehicle_ymmblock_theme_registry_alter(&$theme_registry) {
+  $mod_path = drupal_get_path('module', 'vehicle_ymmblock');
+  $theme_registry_copy = $theme_registry;
+  _theme_process_registry($theme_registry_copy, 'phptemplate', 'theme_engine', 'pow', $mod_path);
+  $theme_registry += array_diff_key($theme_registry_copy, $theme_registry);
+  $hooks = array('block');
+  foreach ($hooks as $h) {
+    _vehicle_ymmblock_insert_after_first_element($theme_registry[$h]['theme paths'], $mod_path);
+  }
+}
+
+/**
+ * Helper function for re-ordering arrays (needed by theme_registry_alter).
+ */
+function _vehicle_ymmblock_insert_after_first_element(&$a, $element) {
+  if (is_array($a)) {
+    $first_element = array_shift($a);
+    array_unshift($a, $first_element, $element);
+  }
+}

@@ -1,0 +1,312 @@
+<?php
+
+/**
+ * @file
+ * Installation hooks for the CarQuery API module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function vehicle_carqueryapi_install() {
+  field_associate_fields('vehicle_model');
+
+  // Create all the fields we are adding to our content type.
+  // http://api.drupal.org/api/function/field_create_field/7
+  foreach (_vehicle_carqueryapi_installed_fields() as $field) {
+    field_create_field($field);
+  }
+
+  // Create all the instances for our fields.
+  // http://api.drupal.org/api/function/field_create_instance/7
+  foreach (_vehicle_carqueryapi_installed_instances() as $instance) {
+    $instance['entity_type'] = 'vehicle_model';
+    $instance['bundle'] = 'vehicle_model_bundle';
+    field_create_instance($instance);
+  }
+
+  field_cache_clear();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function vehicle_carqueryapi_uninstall() {
+  // Loop over each of the fields defined by this module and delete
+  // all instances of the field, their data, and the field itself.
+  // http://api.drupal.org/api/function/field_delete_field/7
+  foreach (array_keys(_vehicle_carqueryapi_installed_fields()) as $field) {
+    field_delete_field($field);
+  }
+
+  // Purge all field infromation
+  // http://api.drupal.org/api/function/field_purge_batch/7
+  field_purge_batch(1000);
+}
+
+/**
+ * Returns a structured array defining the fields created by this content type.
+ *
+ * This is factored into this function so it can be used in both
+ * node_example_install() and node_example_uninstall().
+ *
+ * @return array
+ *   An associative array specifying the CarQueryAPI fields.
+ *
+ * @ingroup vehicle_carqueryapi
+ */
+function _vehicle_carqueryapi_installed_fields() {
+  $t = get_t();
+  return array(
+    'model_engine_position' => array(
+      'field_name' => 'model_engine_position',
+      'type' => 'text',
+    ),
+    'model_engine_cc' => array(
+      'field_name' => 'model_engine_cc',
+      'type' => 'number_integer',
+    ),
+    'model_engine_num_cyl' => array(
+      'field_name' => 'model_engine_num_cyl',
+      'type' => 'number_integer',
+    ),
+    'model_engine_type' => array(
+      'field_name' => 'model_engine_type',
+      'type' => 'text',
+    ),
+    'model_engine_valves_per_cyl' => array(
+      'field_name' => 'model_engine_valves_per_cyl',
+      'type' => 'number_integer',
+    ),
+    'model_engine_power_ps' => array(
+      'field_name' => 'model_engine_power_ps',
+      'type' => 'number_integer',
+    ),
+    'model_engine_power_rpm' => array(
+      'field_name' => 'model_engine_power_rpm',
+      'type' => 'number_integer',
+    ),
+    'model_engine_torque_nm' => array(
+      'field_name' => 'model_engine_torque_nm',
+      'type' => 'number_integer',
+    ),
+    'model_engine_torque_rpm' => array(
+      'field_name' => 'model_engine_torque_rpm',
+      'type' => 'number_integer',
+    ),
+    'model_engine_bore_mm' => array(
+      'field_name' => 'model_engine_bore_mm',
+      'type' => 'number_integer',
+    ),
+    'model_engine_stroke_mm' => array(
+      'field_name' => 'model_engine_stroke_mm',
+      'type' => 'number_integer',
+    ),
+    'model_engine_compression' => array(
+      'field_name' => 'model_engine_compression',
+      'type' => 'text',
+    ),
+    'model_engine_fuel' => array(
+      'field_name' => 'model_engine_fuel',
+      'type' => 'text',
+    ),
+    'model_top_speed_kph' => array(
+      'field_name' => 'model_top_speed_kph',
+      'type' => 'number_float',
+    ),
+    'model_0_to_100_kph' => array(
+      'field_name' => 'model_0_to_100_kph',
+      'type' => 'number_float',
+    ),
+    'model_drive' => array(
+      'field_name' => 'model_drive',
+      'type' => 'text',
+    ),
+    'model_transmission' => array(
+      'field_name' => 'model_transmission',
+      'type' => 'text',
+    ),
+    'model_seats' => array(
+      'field_name' => 'model_seats',
+      'type' => 'number_integer',
+    ),
+    'model_doors' => array(
+      'field_name' => 'model_doors',
+      'type' => 'number_integer',
+    ),
+    'model_weight_kg' => array(
+      'field_name' => 'model_weight_kg',
+      'type' => 'number_float',
+    ),
+    'model_length_mm' => array(
+      'field_name' => 'model_length_mm',
+      'type' => 'number_float',
+    ),
+    'model_width_mm' => array(
+      'field_name' => 'model_width_mm',
+      'type' => 'number_float',
+    ),
+    'model_height_mm' => array(
+      'field_name' => 'model_height_mm',
+      'type' => 'number_float',
+    ),
+    'model_wheelbase' => array(
+      'field_name' => 'model_wheelbase',
+      'type' => 'number_float',
+    ),
+    'model_lkm_hwy' => array(
+      'field_name' => 'model_lkm_hwy',
+      'type' => 'number_float',
+    ),
+    'model_lkm_mixed' => array(
+      'field_name' => 'model_lkm_mixed',
+      'type' => 'number_float',
+    ),
+    'model_lkm_city' => array(
+      'field_name' => 'model_lkm_city',
+      'type' => 'number_float',
+    ),
+    'model_fuel_cap_l' => array(
+      'field_name' => 'model_fuel_cap_l',
+      'type' => 'number_float',
+    ),
+    // @todo This should be a checkbox in the admin interface.
+    'model_sold_in_us' => array(
+      'field_name' => 'model_sold_in_us',
+      'type' => 'number_integer',
+    ),
+  );
+}
+
+/**
+ * Returns a structured array defining the instances for this content type.
+ *
+ * This is factored into this function so it can be used in both
+ * node_example_install() and node_example_uninstall().
+ *
+ * @return array
+ *   An associative array specifying the CarQueryAPI field instances.
+ *
+ * @ingroup vehicle_carqueryapi
+ */
+function _vehicle_carqueryapi_installed_instances() {
+  $t = get_t();
+  return array(
+    'model_engine_position' => array(
+      'field_name' => 'model_engine_position',
+      'label' => $t('Engine position'),
+    ),
+    'model_engine_cc' => array(
+      'field_name' => 'model_engine_cc',
+      'label' => $t('Engine displacement (cc)'),
+    ),
+    'model_engine_num_cyl' => array(
+      'field_name' => 'model_engine_num_cyl',
+      'label' => $t('Engine cylinders'),
+    ),
+    'model_engine_type' => array(
+      'field_name' => 'model_engine_type',
+      'label' => $t('Engine type'),
+    ),
+    'model_engine_valves_per_cyl' => array(
+      'field_name' => 'model_engine_valves_per_cyl',
+      'label' => $t('Engine valves per cylinder'),
+    ),
+    'model_engine_power_ps' => array(
+      'field_name' => 'model_engine_power_ps',
+      'label' => $t('Engine max power (PS)'),
+    ),
+    'model_engine_power_rpm' => array(
+      'field_name' => 'model_engine_power_rpm',
+      'label' => $t('Engine max power RPM'),
+    ),
+    'model_engine_torque_nm' => array(
+      'field_name' => 'model_engine_torque_nm',
+      'label' => $t('Engine max torque (Nm)'),
+    ),
+    'model_engine_torque_rpm' => array(
+      'field_name' => 'model_engine_torque_rpm',
+      'label' => $t('Engine max torque RPM'),
+    ),
+    'model_engine_bore_mm' => array(
+      'field_name' => 'model_engine_bore_mm',
+      'label' => $t('Engine bore (mm)'),
+    ),
+    'model_engine_stroke_mm' => array(
+      'field_name' => 'model_engine_stroke_mm',
+      'label' => $t('Engine stroke (mm)'),
+    ),
+    'model_engine_compression' => array(
+      'field_name' => 'model_engine_compression',
+      'label' => $t('Engine compression ratio'),
+    ),
+    'model_engine_fuel' => array(
+      'field_name' => 'model_engine_fuel',
+      'label' => $t('Engine fuel type'),
+    ),
+    'model_top_speed_kph' => array(
+      'field_name' => 'model_top_speed_kph',
+      'label' => $t('Top speed (KPH)'),
+    ),
+    'model_0_to_100_kph' => array(
+      'field_name' => 'model_0_to_100_kph',
+      'label' => $t('0-100 kph (0-62mph)'),
+    ),
+    'model_drive' => array(
+      'field_name' => 'model_drive',
+      'label' => $t('Drive'),
+    ),
+    'model_transmission' => array(
+      'field_name' => 'model_transmission',
+      'label' => $t('Transmission type'),
+    ),
+    'model_seats' => array(
+      'field_name' => 'model_seats',
+      'label' => $t('Seats'),
+    ),
+    'model_doors' => array(
+      'field_name' => 'model_doors',
+      'label' => $t('Doors'),
+    ),
+    'model_weight_kg' => array(
+      'field_name' => 'model_weight_kg',
+      'label' => $t('Weight (kg)'),
+    ),
+    'model_length_mm' => array(
+      'field_name' => 'model_length_mm',
+      'label' => $t('Length (mm)'),
+    ),
+    'model_width_mm' => array(
+      'field_name' => 'model_width_mm',
+      'label' => $t('Width (mm)'),
+    ),
+    'model_height_mm' => array(
+      'field_name' => 'model_height_mm',
+      'label' => $t('Height (mm)'),
+    ),
+    'model_wheelbase' => array(
+      'field_name' => 'model_wheelbase',
+      'label' => $t('Wheelbase (mm)'),
+    ),
+    'model_lkm_hwy' => array(
+      'field_name' => 'model_lkm_hwy',
+      'label' => $t('Fuel exconomy highway (l/100km)'),
+    ),
+    'model_lkm_mixed' => array(
+      'field_name' => 'model_lkm_mixed',
+      'label' => $t('Fuel exconomy mixed (l/100km)'),
+    ),
+    'model_lkm_city' => array(
+      'field_name' => 'model_lkm_city',
+      'label' => $t('Fuel exconomy city (l/100km)'),
+    ),
+    'model_fuel_cap_l' => array(
+      'field_name' => 'model_fuel_cap_l',
+      'label' => $t('Fuel capacity (l)'),
+    ),
+    'model_sold_in_us' => array(
+      'field_name' => 'model_sold_in_us',
+      'label' => $t('Sold in US'),
+    ),
+  );
+}

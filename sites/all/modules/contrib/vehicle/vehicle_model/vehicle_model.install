@@ -1,0 +1,98 @@
+<?php
+
+/**
+ * @file
+ * Installation hooks for the Vehicle Model module.
+ */
+
+/**
+ * Implements hook_enable().
+ */
+function vehicle_model_enable() {
+  // Clear the cache to display in Feeds as available plugin.
+  cache_clear_all('plugins:feeds:plugins', 'cache');
+}
+
+/**
+ * Implements hook_schema().
+ */
+function vehicle_model_schema() {
+  $schema = array();
+
+  $schema['vehicle_model'] = array(
+    'description' => 'Table to store vehicle models, based on Full Model / Trim Data from carqueryapi.com.',
+    'fields' => array(
+      'model_id' => array(
+        'description' => 'The model_id column from Full Model / Trim Data, also the primary key of the vehicle_model entity',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      // Normally, bundle_type will be 'vehicle_model_bundle', but we allow
+      // for other bundle types.
+      'bundle_type' => array(
+        'description' => 'The bundle type',
+        'type' => 'text',
+        'size' => 'medium',
+        'not null' => TRUE,
+      ),
+      'make_id' => array(
+        'description' => 'The primary key of the associated vehicle_make entity',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'model_name' => array(
+        'description' => 'The model_name column from Full Model / Trim Data',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'model_trim' => array(
+        'description' => 'The model_trim column from Full Model / Trim Data',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+      ),
+      'model_year_start' => array(
+        'description' => 'The model_year column from Full Model / Trim Data',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'model_year_end' => array(
+        'description' => 'The model_year column from Full Model / Trim Data',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'model_body' => array(
+        'description' => 'The model_body column from Full Model / Trim Data',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('model_id'),
+    'indexes' => array(
+      'model_id' => array('model_id'),
+      'model_name' => array('model_name'),
+    ),
+  );
+
+  return $schema;
+}
+
+
+/**
+ * Implements hook_uninstall().
+ *
+ * At uninstall time we'll notify field.module that the entity was deleted
+ * so that attached fields can be cleaned up.
+ */
+function vehicle_model_uninstall() {
+  field_attach_delete_bundle('vehicle_model', 'vehicle_model_bundle');
+}

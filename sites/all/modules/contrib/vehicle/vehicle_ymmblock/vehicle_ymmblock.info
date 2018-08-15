@@ -1,0 +1,14 @@
+name = Vehicle Y/M/M Tree Block
+package = Vehicle
+description = Hierarchical display of year make and models in block.
+core = 7.x
+
+dependencies[] = block
+dependencies[] = vehicle_ymm
+
+; Information added by Drupal.org packaging script on 2015-01-09
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "vehicle"
+datestamp = "1420833781"
+
