@@ -18,19 +18,23 @@ function dashboard_omega_preprocess_views_view(&$vars) {
 $view = $vars['view'];
 	if($view->name == 'get_mail_recipient') {
 		if($view->current_display == 'block'){
-$_SESSION['fname'] = $view->result[0]->{'node/fname'};
-$_SESSION['lname'] = $view->result[0]->{'node/lname'};
-$_SESSION['address'] = $view->result[0]->{'node/address'};
-$_SESSION['city'] = $view->result[0]->{'node/city'};
-$_SESSION['state'] = $view->result[0]->{'node/state'};
-$_SESSION['zip'] = $view->result[0]->{'node/zip'};
-
-$_SESSION['sid'] = $view->result[0]->{'node/sid'};
-$_SESSION['PropName'] = $view->result[0]->{'node/PropName'};
-$_SESSION['PropAddress'] = $view->result[0]->{'PropAddress'};
-$_SESSION['PropCity'] = $view->result[0]->{'node/PropCity'};
-$_SESSION['PropState'] = $view->result[0]->{'node/PropState'};
-$_SESSION['PropZip'] = $view->result[0]->{'PropZip'};
+// $_SESSION['fname'] = $view->result[0]->{'node/fname'};
+// $_SESSION['lname'] = $view->result[0]->{'node/lname'};
+// $_SESSION['address'] = $view->result[0]->{'node/address'};
+// $_SESSION['address2'] = $view->result[0]->{'node/address2'};
+// $_SESSION['city'] = $view->result[0]->{'node/city'};
+// $_SESSION['state'] = $view->result[0]->{'node/state'};
+// $_SESSION['zip'] = $view->result[0]->{'node/zip'};
+// $_SESSION['recip_email'] = $view->result[0]->{'node/recip_email'};
+// $_SESSION['recip_phone'] = $view->result[0]->{'node/recip_phone'};
+// $_SESSION['purl'] = $view->result[0]->{'node/purl'};
+// 
+// $_SESSION['sid'] = $view->result[0]->{'node/sid'};
+// $_SESSION['PropName'] = $view->result[0]->{'node/PropName'};
+// $_SESSION['PropAddress'] = $view->result[0]->{'PropAddress'};
+// $_SESSION['PropCity'] = $view->result[0]->{'node/PropCity'};
+// $_SESSION['PropState'] = $view->result[0]->{'node/PropState'};
+// $_SESSION['PropZip'] = $view->result[0]->{'PropZip'};
 
 // print "<pre>";
 // print_r($view->result[0]);
@@ -42,7 +46,7 @@ $_SESSION['PropZip'] = $view->result[0]->{'PropZip'};
 
 function dashboard_omega_preprocess_html(&$variables) {
 
-
+/*
 	// make sure a dealer can only view jobs they are added as users to
 	if(substr($_SERVER['REQUEST_URI'],0,8) == '/dealer/'){
 		if(in_array('dealership',$GLOBALS['user']->roles)){
@@ -52,7 +56,7 @@ function dashboard_omega_preprocess_html(&$variables) {
 			}
 		}
 	}
-
+*/
 
 
 

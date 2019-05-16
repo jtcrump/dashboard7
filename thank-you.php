@@ -1,4 +1,24 @@
-Thanks!
+<html>
+<head>
+<title></title>
+<style>
+body {
+
+background: url("/sites/default/files/images/ty_bg.jpg") no-repeat center center fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+
+.ty-box {max-width: 300px;margin: 200px auto 0 auto;text-align: center;background-color: #fff; font-family: arial; padding: 50px 30px 50px 30px }
+.ty-box hr {width: 20%;}
+}
+
+.container {margin: auto;max-width: 400px; text-align: center;background-color: white; padding: 50px;font-family: arial !important;}
+</style>
+</head>
+
+<body>
 <?php
  define('DRUPAL_ROOT', getcwd());
 
@@ -7,7 +27,24 @@ Thanks!
  drupal_set_time_limit(240);
 // get the form field data
 
+$q = array();
 
+foreach ($_POST as $key => $value) {
+   // echo "Field ".htmlspecialchars($key)." is ".htmlspecialchars($value)."<br>";
+	if(substr_count(htmlspecialchars($key),"q_") > 0){
+	array_push($q, htmlspecialchars($value));
+	} else {
+		if(substr_count(htmlspecialchars($key),"year") > 0){
+		// get year/make/model/trim
+		$year = $_POST['car-years'];
+		$make = $_POST['car-makes'];
+		$model = $_POST['car-models'];
+		$trim = $_POST['car-model-trims'];
+		$vehicle = $year.'/'.$make.'/'.$model.'/'.$trim;
+		array_push($q, htmlspecialchars($vehicle));
+		}
+	}
+}
 
 // create web-responses the node
 
@@ -34,14 +71,45 @@ Content: Address -postal address field - Postal code
 
 */
 
-$title = "foo";
+$title = $_SESSION['purl'];
+
+if(!isset($_POST['fname'])){
 $fname = $_SESSION['fname'];
 $lname = $_SESSION['lname'];
+} else {
+$fname = $_POST['fname'];
+$lname = $_POST['lname'];
+$title = $fname . "-" . $lname;
+}
+
+
 $PropID = $_SESSION['sid'];
+$dealer = $_SESSION['sid'];
+$address = $_SESSION['address'];
+$address2 = $_SESSION['address2'];
+$city = $_SESSION['city'];
+$state = $_SESSION['state'];
+$zip = $_SESSION['zip'];
 
-$phone = "504-236-0078";
-$email = "jcrump@tulane.edu";
+if(!isset($_POST['phone'])){
+$phone = $_SESSION['recip_phone'];
+} else {
+$phone = $_POST['phone'];
+}
+if(!isset($_POST['email'])){
+$email = $_SESSION['recip_email'];
+} else {
+$email = $_POST['email'];
+}
 
+
+if($title == ''){
+$title = $_POST['fname'] . "-" . $_POST['lname'];
+$fname = $_POST['fname'];
+$lname = $_POST['lname'];
+$phone = $_POST['phone'];
+$email = $_POST['email'];
+}
 
 $query = new EntityFieldQuery();
 $query->entityCondition('entity_type', 'node')
@@ -60,12 +128,21 @@ if (isset($result['node'])) {
 
 foreach($dealer as $d){
 $dealership = $d->vid;
+$dealership_name = $d->title;
+$certificate = $d->field_certificate['und'][0]['filename'];
+
+/*
+print "<pre>";
+print_r($d->field_certificate);
+print "</pre>";
+*/
 }
 
-// print "<pre>";
-// print_r($dealer);
-// print "</pre>";
-
+/*
+ print "<pre>";
+ print_r($dealer);
+ print "</pre>";
+*/
 
 // Create a node
 $node = entity_create('node', array('type' => 'web_responses'));
@@ -81,13 +158,87 @@ $node_wrapper->field_mail_recip_phone = $phone;
 $node_wrapper->field_mail_recip_email = $email;
 $node_wrapper->field_dealership = $dealership;
 
+$node_wrapper->field_web_user_answer_1 = $q[0];
+$node_wrapper->field_web_user_answer_2 = $q[1];
+$node_wrapper->field_web_user_answer_3 = $q[2];
+$node_wrapper->field_web_user_answer_4 = $q[3];
+$node_wrapper->field_web_user_answer_5 = $q[4];
+$node_wrapper->field_web_user_answer_6 = $q[5];
+$node_wrapper->field_web_user_answer_7 = $q[6];
+$node_wrapper->field_response_origin = "Web";
+
+$node_wrapper->field_web_user_address = array( 
+        'country' => 'US',
+        'thoroughfare' => $address,
+        'premise' => $address2,
+        'locality' => $city,
+        'administrative_area' => $state,
+	'name_line' => $fname . " " . $lname,
+        'postal_code' => $zip
+      );
+
  $node_wrapper->save();
+
+
+
+
+
+// send email notification if required
+
+
+$node = node_load($dealership);
+$wrapper = entity_metadata_wrapper('node', $node);
+$dealer_email = $wrapper->field_dealer_email->value();
+$email_lead = $wrapper->field_email_leads->value();
+$email_contact = $wrapper->field_dealer_contact->value();
+
+
+if(isset($email_lead)){
+$from = "mycampaignboard@ypprint.com";
+$subject = "[My Campaign Board] Congratulations! A new lead has been generated on your campaign!";
+$body = 'Hello ' . $email_contact . ',<br />A new lead has been generated on your campaign. Please log into your dashboard <a href="http://mycampaginboard.com/login">http://mycampaginboard.com/login</a> to work with this potential sale.<br />Thank you!';
+
+simple_mail_send($from, $dealer_email, $subject, $body);
+}
 
 
 
 // display Thank You message
 
-
+foreach ($_POST as $key => $value) {
+   // echo "Field ".htmlspecialchars($key)." is ".htmlspecialchars($value)."<br>";
+}
 
 
 ?>
+<div class="container">
+<div class="ty-box">
+<h2>THANK YOU</h2>
+<hr />
+<h4>Your information has been submitted</h4>
+<h3><?php print render($dealership_name); ?></h3>
+<h4>will contact you soon</h4>
+</div>
+</div>
+
+<style>
+.cert {width: 100%;text-align: center;min-width: 500px;}
+.cert img {max-width: 100%; margin-top: 35px;}
+.cert h2 {text-transform: capitalize; font-family: arial !important; 
+padding: 4px 2px; background-color: rgba(255, 255, 255, .6); 
+max-width: 450px; margin-left: auto; margin-right: auto;
+position: relative; z-index: 4;
+margin-top: 300px; 
+margin-bottom: -240px;}
+@media (max-width: 800px){.cert h2 {margin-top: 40% ; margin-bottom: -34%; }}
+</style>
+<?php if(isset($certificate)){ 
+print '<div class="cert">';
+print '<h2>'.$fname.' '.$lname.'</h2>';
+print '<img src="/sites/dashboard7.dd/files/'.$certificate.'">';
+print '</div>';
+}
+?>
+
+</body>
+</html>

@@ -1,161 +1,178 @@
-<style>
-* {
-  box-sizing: border-box;
+<?php
+foreach($items as $item){
+// print "|".render($item)."|||";
 }
 
-body {
-  background-color: #f1f1f1;
+// print $user->roles[1];
+
+if(substr_count(render($items[0]),"<h2></h2>") == 1 AND $user->roles[1] == "anonymous user"){
+print '<div class="voucher"><img src="/sites/default/files/images/golden-ticket-h.jpg" alt="Voucher for 2500 free mail pieces" /></div>';
+print "<style>#regForm {display: none;}.voucher{margin:auto;} .voucher img {display:block; margin-left: auto; margin-right: auto; max-width: 60%; margin-top: -500px;}</style>";
 }
 
-#regForm {
-  background-color: #ffffff;
-  margin: 100px auto;
-  font-family: Raleway;
-  padding: 40px;
-  width: 70%;
-  min-width: 300px;
+
+if($user->roles[1] == "anonymous user"){
+// get the url params
+$q =  $_GET['q'];
+$d = explode("/",$q);
+$dealer1 = $d[0];
+$purl = $d[1];
+// lookup the user
+
+
+
+$mysqli = new mysqli("192.168.1.170", "drupaluser", "", "zips");
+
+/* check connection */
+	if ($mysqli->connect_errno) {
+    	printf("Connect failed: %s\n", $mysqli->connect_error);
+    	exit();
+	}
+
+$sql = "SELECT * FROM mail_recips WHERE dealer like '%".$dealer1."' AND purl like '$purl' ORDER BY id DESC LIMIT 0,1";
+$result = $mysqli->query($sql);
+
+
+
+if($result->num_rows == 0){
+$sql = "SELECT * FROM mail_recips WHERE dealer like '%".$dealer1."' AND purl like 'JohnDoe' ORDER BY id DESC LIMIT 0,1";
+$result = $mysqli->query($sql);
+} 
+
+
+$row = $result->fetch_assoc();
+
+$title = $row['purl'];
+$fname = $row['fname'];
+$lname = $row['lname'];
+$PropID = $row['dealer'];
+$dealer = $row['dealer'];
+$address = $row['address'];
+$address2 = $row['address2'];
+$city = $row['city'];
+$state = $row['state'];
+$zip = $row['zip'];
+
+$phone = $row['recip_phone'];
+$email = $row['recip_email'];
+
+
+$mysqli->close();
+
+/*
+print "<pre>";
+print_r($row);
+print "</pre>";
+*/
+
+$query = new EntityFieldQuery();
+$query->entityCondition('entity_type', 'node')
+  ->entityCondition('bundle', 'job_dashboard')
+  ->propertyCondition('status', NODE_PUBLISHED)
+  ->fieldCondition('field_job_id', 'value', $PropID, '=')
+  ->range(0, 1)
+  // Run the query as user 1.
+  ->addMetaData('account', user_load(1));
+
+$result = $query->execute();
+	if (isset($result['node'])) {
+  	$job_dashboard_nid = array_keys($result['node']);
+  	$dealer = entity_load('node', $job_dashboard_nid);
+	} 
+
+	foreach($dealer as $d){
+	$dealership = $d->vid;
+	$dealership_name = $d->title;
+	}
+
+
+
+// Create a node
+$node = entity_create('node', array('type' => 'web_responses'));
+// Create a Entity Wrapper of that new Entity.
+$node_wrapper = entity_metadata_wrapper('node', $node);
+// Set a title and some text field values.
+$node_wrapper->language = LANGUAGE_NONE;
+$node_wrapper->type = 'web_responses';
+$node_wrapper->title = $title;
+$node_wrapper->field_mail_recip_first_name = $fname;
+$node_wrapper->field_mail_recip_last_name = $lname;
+$node_wrapper->field_mail_recip_phone = $phone;
+$node_wrapper->field_mail_recip_email = $email;
+$node_wrapper->field_dealership = $dealership;
+$node_wrapper->field_response_origin = "Web";
+$node_wrapper->field_web_user_address = array( 
+        'country' => 'US',
+        'thoroughfare' => $address,
+        'premise' => $address2,
+        'locality' => $city,
+        'administrative_area' => $state,
+	'name_line' => $fname . " " . $lname,
+        'postal_code' => $zip
+      );
+
+	if($title != '' and $title != 'JohnDoe'){
+ 	$node_wrapper->save();
+	}
 }
 
-h1 {
-  text-align: center;  
-}
-
-input {
-  padding: 10px;
-  width: 100%;
-  font-size: 17px;
-  font-family: Raleway;
-  border: 1px solid #aaaaaa;
-}
-
-/* Mark input boxes that gets an error on validation: */
-input.invalid {
-  background-color: #ffdddd;
-}
-
-/* Hide all steps by default: */
-.tab {
-  display: none;
-}
-
-button {
-  background-color: #4CAF50;
-  color: #ffffff;
-  border: none;
-  padding: 10px 20px;
-  font-size: 17px;
-  font-family: Raleway;
-  cursor: pointer;
-}
-
-button:hover {
-  opacity: 0.8;
-}
-
-#prevBtn {
-  background-color: #bbbbbb;
-}
-
-/* Make circles that indicate the steps of the form: */
-.step {
-  height: 15px;
-  width: 15px;
-  margin: 0 2px;
-  background-color: #bbbbbb;
-  border: none;  
-  border-radius: 50%;
-  display: inline-block;
-  opacity: 0.5;
-}
-
-.step.active {
-  opacity: 1;
-}
-
-/* Mark the steps that are finished and valid: */
-.step.finish {
-  background-color: #4CAF50;
-}
-</style>
-
-
-<!---
-  <div class="tab">Name:
-    <p><input placeholder="First name..." oninput="this.className = ''" name="fname"></p>
-    <p><input placeholder="Last name..." oninput="this.className = ''" name="lname"></p>
-  </div>
-  <div class="tab">Contact Info:
-    <p><input placeholder="E-mail..." oninput="this.className = ''" name="email"></p>
-    <p><input placeholder="Phone..." oninput="this.className = ''" name="phone"></p>
-  </div>
-  <div class="tab">Birthday:
-    <p><input placeholder="dd" oninput="this.className = ''" name="dd"></p>
-    <p><input placeholder="mm" oninput="this.className = ''" name="nn"></p>
-    <p><input placeholder="yyyy" oninput="this.className = ''" name="yyyy"></p>
-  </div>
-  <div class="tab">Login Info:
-    <p><input placeholder="Username..." oninput="this.className = ''" name="uname"></p>
-    <p><input placeholder="Password..." oninput="this.className = ''" name="pword" type="password"></p>
-  </div>
-  <div style="overflow:auto;">
-    <div style="float:right;">
-      <button type="button" id="prevBtn" onclick="nextPrev(-1)">Previous</button>
-      <button type="button" id="nextBtn" onclick="nextPrev(1)">Next</button>
-    </div>
-  </div>
---->
-
-
-
-
-
-
-<!---
-<div class="container-wrapper contained">
-<div class="container-inner" style="padding: 18px;">
-<div class="ory-row ory-cell-inner">
-<div class="ory-cell ory-cell-sm-5 ory-cell-xs-12">
-<div class="ory-cell-inner">
-<div class="container-outer" style="background-color: rgb(255, 255, 255); background-repeat: no-repeat; color: rgb(0, 0, 0); margin-left: 35px;">
-<div class="container-wrapper contained">
-<div class="container-inner">
-<div class="ory-row ory-cell-inner">
-<div class="ory-cell ory-cell-sm-12 ory-cell-xs-12">
-<div class="ory-cell-inner">
-<div class="container-outer" style="background-repeat: no-repeat; margin: 26px;">
-<div class="container-wrapper contained">
-<div class="container-inner">
-<div class="ory-row ory-cell-inner">
-<div class="ory-cell ory-cell-sm-12 ory-cell-xs-12">
-<div class="ory-cell-inner ory-cell-leaf">
-<div id="call-to-action-form">
-<div class="css-nil">
---->
-
-
-
+?>
 
 
 
 <form id="regForm" action="/thank-you.php" method="POST">
 <input type="hidden" name="uid" value="<?php print $_GET['q'];; ?>">
+
+<?php if(isset($_SESSION['sid'])) { ?>
 <input type="hidden" name="sid" value="<?php print $_SESSION['sid']; ?>">
+<?php } ?>
+
+<?php if(isset($_GET['q'])){ 
+if(substr($_GET['q'],0,4) != 'node'){
+?>
+<div id="form-intro">
+<h2><?php print $d->field_form_title['und'][0]['value']; ?></h2>
+<?php print $d->field_form_intro_text['und'][0]['value']; ?>
+</div>
+<?php } } ?>
+
 <?php 
+$x=0;
+
+
+
 foreach($items as $item){
+
 print '<div class="tab">';
 print render($item);
 print '</div>';
 
-} ?>
+} 
 
-  <div style="overflow:auto;">
-    <div style="float:right;">
-      <button type="button" id="prevBtn" onclick="nextPrev(-1)">Previous</button>
-      <button type="button" id="nextBtn" onclick="nextPrev(1)">Next</button>
-    </div>
-  </div>
+?>
+
+
+<?php if(isset($_GET['q'])){ 
+	if(substr($_GET['q'],0,4) != 'node'){
+?>
+
+  	<div style="overflow:auto;">
+    		<div style="float:right;">
+      		<button type="button" id="prevBtn" onclick="nextPrev(-1)">Previous</button>
+      		<button type="button" id="nextBtn" onclick="nextPrev(1)">Next</button>
+    		</div>
+  	</div>
+
+<?php
+	}
+}
+?>
+
+
+
 
   <!-- Circles which indicates the steps of the form: -->
+
   <div style="text-align:center;margin-top:40px;">
 <?php
 foreach($items as $item){
@@ -169,115 +186,3 @@ foreach($items as $item){
 </form>
 
 
-
-
-
-
-<!---
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
---->
-
-<script>
-var currentTab = 0; // Current tab is set to be the first tab (0)
-showTab(currentTab); // Display the crurrent tab
-
-function showTab(n) {
-  // This function will display the specified tab of the form...
-  var x = document.getElementsByClassName("tab");
-  x[n].style.display = "block";
-  //... and fix the Previous/Next buttons:
-  if (n == 0) {
-    document.getElementById("prevBtn").style.display = "none";
-  } else {
-    document.getElementById("prevBtn").style.display = "inline";
-  }
-  if (n == (x.length - 1)) {
-    document.getElementById("nextBtn").innerHTML = "Submit";
-  } else {
-    document.getElementById("nextBtn").innerHTML = "Next";
-  }
-  //... and run a function that will display the correct step indicator:
-  fixStepIndicator(n)
-}
-
-function nextPrev(n) {
-  // This function will figure out which tab to display
-  var x = document.getElementsByClassName("tab");
-  // Exit the function if any field in the current tab is invalid:
-  if (n == 1 && !validateForm()) return false;
-  // Hide the current tab:
-  x[currentTab].style.display = "none";
-  // Increase or decrease the current tab by 1:
-  currentTab = currentTab + n;
-  // if you have reached the end of the form...
-  if (currentTab >= x.length) {
-    // ... the form gets submitted:
-    document.getElementById("regForm").submit();
-    return false;
-  }
-  // Otherwise, display the correct tab:
-  showTab(currentTab);
-}
-
-function validateForm() {
-  // This function deals with validation of the form fields
-  var x, y, i, valid = true;
-  x = document.getElementsByClassName("tab");
-  y = x[currentTab].getElementsByTagName("input");
-  // A loop that checks every input field in the current tab:
-  for (i = 0; i < y.length; i++) {
-    // If a field is empty...
-    if (y[i].value == "") {
-      // add an "invalid" class to the field:
-      y[i].className += " invalid";
-      // and set the current valid status to false
-      valid = false;
-    }
-  }
-  // If the valid status is true, mark the step as finished and valid:
-  if (valid) {
-    document.getElementsByClassName("step")[currentTab].className += " finish";
-  }
-  return valid; // return the valid status
-}
-
-function fixStepIndicator(n) {
-  // This function removes the "active" class of all steps...
-  var i, x = document.getElementsByClassName("step");
-  for (i = 0; i < x.length; i++) {
-    x[i].className = x[i].className.replace(" active", "");
-  }
-  //... and adds the "active" class on the current step:
-  x[n].className += " active";
-}
-</script>
-
-<!---
-http://www.smithfordevent.com/get-models?year=1992&make=4
-
---->
-
-
-
-
-
-<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
