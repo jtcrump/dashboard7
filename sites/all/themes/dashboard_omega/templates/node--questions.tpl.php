@@ -1,87 +1,97 @@
 <?php 
+/**
+ * Basic stuff
+ */
+$vehicleYears = range(1941, date('Y'));
+rsort($vehicleYears);
 
-print "<pre>";
-// print_r($_SESSION);
-print "</pre>";
+function validField($field) {
+	return in_array($field, [
+		'first name', 'last name', 'phone', 'email',
+		'yes', 'no', 'year', 'make'
+	]);
+}
 
-
-// if(substr($content['field_answers']['#object']->title,0,29) != 'Enter your information below!'){
-print '<h2>'.$content['field_answers']['#object']->title.'</h2>'; 
-// }
-?>
- <fieldset> 
-<?php foreach($content['field_answers']['#object']->field_answers['und'] as $d){ ?>
- <label class="input-group"> 
-<div class="row"> 
-
- </div> 
-
-
-
-<?php
-
-
-if(
-strtolower($d['value']) == "first name" or 
-strtolower($d['value']) == "last name" or 
-strtolower($d['value']) == "phone" or 
-strtolower($d['value']) == "email" or 
-strtolower($d['value']) == "yes" or 
-strtolower($d['value']) == "no" or 
-strtolower($d['value']) == "year" or 
-strtolower($d['value']) == "make"){ 
-
-
-	if(strtolower($d['value']) == "first name"){
-		print '<input type="text" name="fname" size="20" value="" placeholder="First Name">';
+function getFieldsFromContent($content) {
+	try {
+		$fieldData = $content['field_answers']['#object']->field_answers['und'];
+		$fields = array_map(function ($field) { return (object)['value' => $field['value'], 'name' => strtolower($field['value'])]; }, $fieldData);
+		return $fields;
+	} catch (\Exception $e) {
+		error_log("unable to get fields from context in node-questions: ".$e->getMessage());
+		die('unable to process at this time');
 	}
-	if(strtolower($d['value']) == "last name"){
-		print '<input type="text" name="lname" size="20" value="" placeholder="Last Name">';
-	}
-	if(strtolower($d['value']) == "phone"){
-	?> <input id="phone" type="text" name="phone" size="20" value="phone #" onfocus="this.value=''"> <?php
-	}
-	if(strtolower($d['value']) == "email"){
-	?> <input id="email" type="text" name="email" size="20" value="email" onfocus="this.value=''"> <?php
-	}
+}
 
+$inputFields = [
+	'first name' => (object) [
+		'name' => 'fname',
+		'type' => 'text',
+	],
+	'last name' => (object) [
+		'name' => 'lname',
+		'type' => 'text',
+	],
+	'phone' => (object) [
+		'name' => 'phone',
+		'type' => 'tel',
+	],
+	'email' => (object) [
+		'name' => 'email',
+		'type' => 'email',
+	],
+];
 
+$fields = getFieldsFromContent($content);
 
-	if(strtolower($d['value']) == "yes"){ ?>
+if (! count($fields)) {
+	error_log("[node--questions]: unable to isolate form fields from context variable! Exiting.");
+	die("unable to process at this time");
+}
 
-  <label class="container">
-    <input type="radio" value="Yes" name="q_<?php print $content['field_answers']['#object']->vid; ?>" id="accessible"> 
-	<span class="checkmark"></span> Yes
-  </label>
-<?php	}	if(strtolower($d['value']) == "no"){ ?>
-  <label class="container">
-    <input type="radio" value="No" name="q_<?php print $content['field_answers']['#object']->vid; ?>" id="pretty"> 
-	<span class="checkmark"></span> No
-  </label>
+print '<h2>'.$content['field_answers']['#object']->title.'</h2>';?>
 
+<div class="form-interior"> 
+<?php foreach ($fields as $field ) : ?>
 
-<?php	}
+<label class="input-group"> 
+<div class="row"> </div> 
 
-
-	if(strtolower($d['value']) == "year"){
-?>
-
-
+<?php if (validField($field->name)) {
+	if (in_array($field->name, array_keys($inputFields))) {
+		$fieldData = $inputFields[$field->name];
+		print "<input type='{$fieldData->type}' name='{$fieldData->name}' size='20' placeholder='{$field->value}' required>";
+	} else {
+		if (in_array($field->name, ['yes', 'no'])) : ?>
+	  <label class="container">
+		<input type="radio" value="{$field->value}" name="q_<?=$content['field_answers']['#object']->vid;?>" id="accessible"> 
+		<span class="checkmark"></span> <?=$field->value;?>
+	  </label>
+		<?php endif; ?>	
+	<?php if ($field->name == "year") : // YEAR BLOCK ?>
 <script type="text/javascript">
 $(document).ready( function() {
-var carquery = new CarQuery();
-carquery.init();
-carquery.initYearMakeModelTrim('car-years', 'car-makes', 'car-models', 'car-model-trims');
-$('#cq-show-data').click(  function(){ carquery.populateCarData('car-model-data'); } );
+	var carquery = new CarQuery();
+	carquery.init();
+	carquery.initYearMakeModelTrim('car-years', 'car-makes', 'car-models', 'car-model-trims');
+	$('#cq-show-data').click(  function(){ carquery.populateCarData('car-model-data'); } );
 });
 </script>
 
-<div id="select-mode"><table><tbody>
-<tr valign="bottom"><th>Year:</th></tr>
-<tr>
-<td><select id="car-years" name="car-years"><option value="">---</option>
-<option value="2019">2019</option>
-<option value="2018">2018</option><option value="2017">2017</option><option value="2016">2016</option><option value="2015">2015</option><option value="2014">2014</option><option value="2013">2013</option><option value="2012">2012</option><option value="2011">2011</option><option value="2010">2010</option><option value="2009">2009</option><option value="2008">2008</option><option value="2007">2007</option><option value="2006">2006</option><option value="2005">2005</option><option value="2004">2004</option><option value="2003">2003</option><option value="2002">2002</option><option value="2001">2001</option><option value="2000">2000</option><option value="1999">1999</option><option value="1998">1998</option><option value="1997">1997</option><option value="1996">1996</option><option value="1995">1995</option><option value="1994">1994</option><option value="1993">1993</option><option value="1992">1992</option><option value="1991">1991</option><option value="1990">1990</option><option value="1989">1989</option><option value="1988">1988</option><option value="1987">1987</option><option value="1986">1986</option><option value="1985">1985</option><option value="1984">1984</option><option value="1983">1983</option><option value="1982">1982</option><option value="1981">1981</option><option value="1980">1980</option><option value="1979">1979</option><option value="1978">1978</option><option value="1977">1977</option><option value="1976">1976</option><option value="1975">1975</option><option value="1974">1974</option><option value="1973">1973</option><option value="1972">1972</option><option value="1971">1971</option><option value="1970">1970</option><option value="1969">1969</option><option value="1968">1968</option><option value="1967">1967</option><option value="1966">1966</option><option value="1965">1965</option><option value="1964">1964</option><option value="1963">1963</option><option value="1962">1962</option><option value="1961">1961</option><option value="1960">1960</option><option value="1959">1959</option><option value="1958">1958</option><option value="1957">1957</option><option value="1956">1956</option><option value="1955">1955</option><option value="1954">1954</option><option value="1953">1953</option><option value="1952">1952</option><option value="1951">1951</option><option value="1950">1950</option><option value="1949">1949</option><option value="1948">1948</option><option value="1947">1947</option><option value="1946">1946</option><option value="1945">1945</option><option value="1944">1944</option><option value="1943">1943</option><option value="1942">1942</option><option value="1941">1941</option></select></td></tr>
+<div id="select-mode">
+	<table>
+		<tbody>
+			<tr valign="bottom">
+				<th>Year:</th>
+			</tr>
+			<tr>
+				<td>
+					<select id="car-years" name="car-years">
+						<option value="">---</option>
+<?php foreach ($vehicleYears as $year) : ?>
+						<option value="<?=$year;?>"><?=$year;?></option>
+<?php endforeach; ?>
+</select></td></tr>
 <tr valign="bottom"><th>Make:</th></tr>
 <tr><td><select id="car-makes" name="car-makes"><option value="">---</option></select></td></tr>
 <tr valign="bottom"><th>Model:</th></tr>
@@ -90,25 +100,18 @@ $('#cq-show-data').click(  function(){ carquery.populateCarData('car-model-data'
 </tr><td><select id="car-model-trims" name="car-model-trims"></select></td></tr>
 </tbody></table></div>
 
-<?php
-}
+<?php else: // YEAR BLOCK ELSE ?>
 
-
-
-} else { 
-	if(strtolower($d['value']) != "model" AND strtolower($d['value']) != "trim"){
-?>
+	if($field->name != "model" AND $field->name != "trim") : ?>
   <label class="container">
     <input type="radio" value="<?php print $d['value']; ?>" name="q_<?php print $content['field_answers']['#object']->vid; ?>" id="accessible"> 
 	<span class="checkmark"></span><?php print $d['value']; ?>
   </label>
-<?php
-	}
-}
+<?php endif; // YEAR BLOCK END ?>
+<?php } } ?>
 
 
-}
-?>
-</fieldset>
+<?php endforeach; ?>
+</div>
 </label>
 
