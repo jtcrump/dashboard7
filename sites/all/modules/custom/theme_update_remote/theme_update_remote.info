@@ -1,0 +1,7 @@
+core = "7.x"
+description = "Theme Update Dealer Theme on 170"
+name = "Themeu Update Remote"
+version = "7.x-1.6"
+core = "7.x"
+project = "theme_update_remote"
+datestamp = "1520453707"
