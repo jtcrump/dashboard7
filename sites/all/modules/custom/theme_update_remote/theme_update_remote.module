@@ -7,15 +7,17 @@ $theme_id = $node->field_mailer_theme[und][0][target_id];
 // lookup the theme and get the name
 $node2 = node_load($theme_id);
 
-$job_id = $node->field_job_id[und][0]['value'];
-$theme_name = $node2->title;
+	if(isset($node2->title)) {
+	$job_id = $node->field_job_id[und][0]['value'];
+	$theme_name = $node2->title;
 
-// update the record on 170
-// set the db to the one on 170
-db_set_active('zipsdb');
-$result = db_query("UPDATE tblproposeddealer SET PropSaleType = '$theme_name' WHERE sid LIKE '$job_id'");
+	// update the record on 170
+	// set the db to the one on 170
+	db_set_active('zipsdb');
+	$result = db_query("UPDATE tblproposeddealer SET PropSaleType = '$theme_name' WHERE sid LIKE '$job_id'");
 
-// set the db back to drupal default
-db_set_active();
+	// set the db back to drupal default
+	db_set_active();
+	}
 }
 ?>
