@@ -1,0 +1,128 @@
+<?php
+
+/**
+ * @file
+ * Installation functions for autoban module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function autoban_schema() {
+  $schema = array();
+  $schema['autoban'] = array(
+    'fields' => array(
+      'rid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The primary identifier for a rule.',
+      ),
+      'type' => array(
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'Type of log message, for example "page not found."',
+      ),
+      'message' => array(
+        'type' => 'text',
+        'not null' => TRUE,
+        'size' => 'big',
+        'description' => 'Pattern of log message.',
+      ),
+      'threshold' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'size' => 'small',
+        'default' => 1,
+        'description' => 'The threshold number of the log entries.',
+      ),
+      'user_type' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'size' => 'small',
+        'default' => 0,
+        'description' => 'The users type: anonymous, authenticated or any.',
+      ),
+      'ip_type' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'size' => 'small',
+        'default' => 0,
+        'description' => 'Single IP or IP range.',
+      ),
+      'referer' => array(
+        'type' => 'text',
+        'size' => 'big',
+        'description' => 'URL of referring page.',
+      ),
+      'created' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Timestamp for when rule was created.',
+      ),
+      'changed' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Timestamp for when rule was created.',
+      ),
+    ),
+    'primary key' => array('rid'),
+    'indexes' => array(
+      'type' => array('type'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Add a column referer.
+ */
+function autoban_update_7001() {
+  if (db_field_exists('autoban', 'referer')) {
+    return;
+  }
+
+  $schema = array(
+    'type' => 'text',
+    'size' => 'big',
+    'description' => 'URL of referring page.',
+  );
+  db_add_field('autoban', 'referer', $schema);
+}
+
+/**
+ * Add columns: created, changed.
+ */
+function autoban_update_7002() {
+  if (!db_field_exists('autoban', 'created')) {
+    db_add_field('autoban', 'created', array(
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+      'description' => 'Timestamp for when rule was created.',
+    ));
+  }
+
+  if (!db_field_exists('autoban', 'changed')) {
+    db_add_field('autoban', 'changed', array(
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+      'description' => 'Timestamp for when rule was changed.',
+    ));
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function autoban_uninstall() {
+  db_delete('variable')
+    ->condition('name', 'autoban_%', 'LIKE')
+    ->execute();
+}
