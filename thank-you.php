@@ -1,4 +1,4 @@
-<html>
+<?php require_once('bootenv.php'); ?><html>
 <head>
 <title></title>
 <style>
