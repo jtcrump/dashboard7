@@ -1,5 +1,3 @@
 <?php
-
-phpinfo();
-
+include_once('vendor/autoload.php');
 ?>
