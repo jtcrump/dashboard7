@@ -13,6 +13,7 @@ function validField($field) {
 }
 
 function getFieldsFromContent($content) {
+
 	try {
 		$fieldData = $content['field_answers']['#object']->field_answers['und'];
 		$fields = array_map(function ($field) { return (object)['value' => $field['value'], 'name' => strtolower($field['value'])]; }, $fieldData);
@@ -102,7 +103,7 @@ $(document).ready( function() {
 
 <?php else: // YEAR BLOCK ELSE ?>
 
-	if($field->name != "model" AND $field->name != "trim") : ?>
+
   <label class="container">
     <input type="radio" value="<?php print $d['value']; ?>" name="q_<?php print $content['field_answers']['#object']->vid; ?>" id="accessible"> 
 	<span class="checkmark"></span><?php print $d['value']; ?>
