@@ -3,7 +3,7 @@
 <title></title>
 <style>
 body {
-
+<?php // phpinfo(); // exit(); ?>
 background: url("/sites/default/files/images/ty_bg.jpg") no-repeat center center fixed;
   -webkit-background-size: cover;
   -moz-background-size: cover;
@@ -222,20 +222,18 @@ foreach ($_POST as $key => $value) {
 </div>
 
 <style>
-.cert {width: 100%;text-align: center;min-width: 500px;}
-.cert img {max-width: 100%; margin-top: 35px;}
-.cert h2 {text-transform: capitalize; font-family: arial !important; 
-padding: 4px 2px; background-color: rgba(255, 255, 255, .6); 
-max-width: 450px; margin-left: auto; margin-right: auto;
-position: relative; z-index: 4;
-margin-top: 300px; 
-margin-bottom: -240px;}
-@media (max-width: 800px){.cert h2 {margin-top: 40% ; margin-bottom: -34%; }}
+.cert {width: 100%;text-align: center;margin-top: 30px;}
+.cert img{max-width: 600px;}
 </style>
 <?php if(isset($certificate)){ 
+
+
 print '<div class="cert">';
-print '<h2>'.$fname.' '.$lname.'</h2>';
-print '<img src="/sites/dashboard7.dd/files/'.$certificate.'">';
+print '<img src="image.php?fname='.$fname.'&lname='.$lname.'&certificate='.$certificate.'">';
+
+
+ // print '<h2>'.$fname.' '.$lname.'</h2>';
+ // print '<img src="/sites/dashboard7.dd/files/'.$certificate.'">';
 print '</div>';
 }
 ?>
