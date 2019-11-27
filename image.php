@@ -22,7 +22,7 @@ ob_clean();
       $white = imagecolorallocate($jpg_image, 255, 255, 255);
 
       // Set Path to Font File
-      $font_path = 'C:\Users\James Crump\Sites\devdesktop\dashboard7\font.TTF';
+      $font_path = '/var/www/html/font.ttf';
 
       // Set Text to Be Printed On Image
       $text = $fname.' '.$lname;
