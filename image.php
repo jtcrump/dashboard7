@@ -1,6 +1,7 @@
 <?php
 // var_dump(gd_info());
 // exit();
+
  define('DRUPAL_ROOT', getcwd());
 
  include_once DRUPAL_ROOT . '/includes/bootstrap.inc';
@@ -24,7 +25,6 @@ $PropID = $_GET['propid'];
 }
 
 
-
 // get dealership info for sale from dashboard
 $query = new EntityFieldQuery();
 $query->entityCondition('entity_type', 'node')
@@ -40,6 +40,7 @@ if (isset($result['node'])) {
   $job_dashboard_nid = array_keys($result['node']);
   $dealer = entity_load('node', $job_dashboard_nid);
 } 
+
 
 foreach($dealer as $d){
 $dealership = $d->vid;
@@ -61,15 +62,17 @@ exit();
 // get customer info from 170
 db_set_active('zipsdb');
 
+
 $query = db_select('mail_recips', 'fe');
 $query
 ->fields('fe', array('fname', 'lname', 'dealer', 'address', 'address2', 'city', 'state', 'zip', 'recip_phone', 'recip_email'))
-->condition('purl','kl1','=')
+->condition('purl',$purl,'=')
 ->condition('dealer',$PropID,'=')
 ->range(0,1)
 ;
 
 $result = $query->execute();
+
 
 if(!isset($result)){
 // make up generic user info
@@ -100,8 +103,6 @@ $title = $fname."-".$lname;
 db_set_active();
 
 
-
-
 // insert into the dashboard
 // Create a node
 $node = entity_create('node', array('type' => 'web_responses'));
@@ -128,23 +129,31 @@ $node_wrapper->field_web_user_address = array(
         'postal_code' => $zip
       );
 
-// $node_wrapper->save();
-
+$node_wrapper->save();
 
 
 // give them the personalized voucher
 ob_clean();
-      header('Content-type: image/jpeg');
+
+$info =  field_info_field('field_certificate');
+$default_img_fid = $info['settings']['default_image'];
+$default_img_file = file_load($default_img_fid);
+
+
+header("Content-Type: image/jpeg");
+
+if(!file_exists('./sites/dashboard7.dd/files/' . $certificate)){
+$certificate = 'default_images/'.$default_img_file->filename;
+}
 
       // Create Image From Existing File
-      $jpg_image = imagecreatefromjpeg('./sites/dashboard7.dd/files/'.$certificate);
+      $jpg_image = imagecreatefromjpeg('./sites/dashboard7.dd/files/' . $certificate);
 
       // Allocate A Color For The Text
       $white = imagecolorallocate($jpg_image, 255, 255, 255);
 
       // Set Path to Font File
-      $font_path = 'C:\Users\James Crump\Sites\devdesktop\dashboard7\font.TTF';
-
+      $font_path = '/var/www/html/font.ttf';
 
 /*
     [country] => US
@@ -176,14 +185,22 @@ $dealer_split = explode(" ",$text3);
 $text3 = $dealer_split[0] . " " . $dealer_split[1] . " " . $dealer_split[2];
 $text4 = str_replace($text3." ", "", $dealer_full);
 $text5 = $address_city_state;
+if(strlen($dphone) > 3) {
 $text6 = "Call: " . $dphone;
+} else {
+$text6 = "";
+} 
       imagettftext($jpg_image, 35, 0, 375, 280, $white, $font_path, $text3);
       imagettftext($jpg_image, 35, 0, 375, 315, $white, $font_path, $text4);
       imagettftext($jpg_image, 25, 0, 375, 345, $white, $font_path, $text5);
       imagettftext($jpg_image, 25, 0, 375, 380, $white, $font_path, $text6);
 } else {
 $text4 = $address_city_state;
+if(strlen($dphone) > 3) {
 $text5 = "Call: " . $dphone;
+} else {
+$text5 = "";
+}
       imagettftext($jpg_image, 35, 0, 375, 280, $white, $font_path, $text3);
       imagettftext($jpg_image, 25, 0, 375, 310, $white, $font_path, $text4);
       imagettftext($jpg_image, 25, 0, 375, 345, $white, $font_path, $text5);
@@ -194,16 +211,9 @@ $text5 = "Call: " . $dphone;
       imagettftext($jpg_image, 45, 0, 525, 150, $white, $font_path, $text);
       imagettftext($jpg_image, 45, 0, 525, 195, $white, $font_path, $text2);
 
-
-
-
-
-
-
       // Send Image to Browser
       imagejpeg($jpg_image);
 
       // Clear Memory
       imagedestroy($jpg_image);
 
-?>
