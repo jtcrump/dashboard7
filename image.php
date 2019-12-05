@@ -1,7 +1,6 @@
 <?php
 // var_dump(gd_info());
 // exit();
-
  define('DRUPAL_ROOT', getcwd());
 
  include_once DRUPAL_ROOT . '/includes/bootstrap.inc';
@@ -24,7 +23,6 @@ $PropID = $_GET['propid'];
 	}
 }
 
-
 // get dealership info for sale from dashboard
 $query = new EntityFieldQuery();
 $query->entityCondition('entity_type', 'node')
@@ -41,7 +39,6 @@ if (isset($result['node'])) {
   $dealer = entity_load('node', $job_dashboard_nid);
 } 
 
-
 foreach($dealer as $d){
 $dealership = $d->vid;
 $dealership_name = $d->title;
@@ -50,14 +47,12 @@ $dphone= $d->field_dealer_phone['und'][0]['value'];
 $certificate = $d->field_certificate['und'][0]['filename'];
 }
 
-
 /*
 print "<pre>";
 print_r($dphone);
 print "</pre>";
 exit();
 */
-
 
 // get customer info from 170
 db_set_active('zipsdb');
@@ -72,7 +67,6 @@ $query
 ;
 
 $result = $query->execute();
-
 
 if(!isset($result)){
 // make up generic user info
@@ -103,6 +97,7 @@ $title = $fname."-".$lname;
 db_set_active();
 
 
+
 // insert into the dashboard
 // Create a node
 $node = entity_create('node', array('type' => 'web_responses'));
@@ -129,11 +124,12 @@ $node_wrapper->field_web_user_address = array(
         'postal_code' => $zip
       );
 
-$node_wrapper->save();
+ $node_wrapper->save();
 
 
 // give them the personalized voucher
 ob_clean();
+
 
 $info =  field_info_field('field_certificate');
 $default_img_fid = $info['settings']['default_image'];
@@ -211,9 +207,10 @@ $text5 = "";
       imagettftext($jpg_image, 45, 0, 525, 150, $white, $font_path, $text);
       imagettftext($jpg_image, 45, 0, 525, 195, $white, $font_path, $text2);
 
+
+
       // Send Image to Browser
       imagejpeg($jpg_image);
 
       // Clear Memory
       imagedestroy($jpg_image);
-

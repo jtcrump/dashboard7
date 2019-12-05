@@ -1,0 +1,12 @@
+name = Views Cumulative Field
+description = Views field that calculates the per-row cumulative value of another field in your view 
+core = 7.x
+dependencies[] = views:views
+files[] = includes/views_handler_cumulative_field.inc
+
+; Information added by Drupal.org packaging script on 2016-11-28
+version = "7.x-1.0"
+core = "7.x"
+project = "views_cumulative_field"
+datestamp = "1480353486"
+
