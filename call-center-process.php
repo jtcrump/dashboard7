@@ -94,7 +94,7 @@ $node_wrapper->field_web_user_address = array(
 	'name_line' => $fname . " " . $lname,
         'postal_code' => $zip
       );
-}
+
 
 
 
