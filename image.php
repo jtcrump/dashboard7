@@ -1,6 +1,9 @@
 <?php
 // var_dump(gd_info());
-// exit();
+
+
+
+
  define('DRUPAL_ROOT', getcwd());
 
  include_once DRUPAL_ROOT . '/includes/bootstrap.inc';
@@ -23,6 +26,7 @@ $PropID = $_GET['propid'];
 	}
 }
 
+
 // get dealership info for sale from dashboard
 $query = new EntityFieldQuery();
 $query->entityCondition('entity_type', 'node')
@@ -39,6 +43,7 @@ if (isset($result['node'])) {
   $dealer = entity_load('node', $job_dashboard_nid);
 } 
 
+
 foreach($dealer as $d){
 $dealership = $d->vid;
 $dealership_name = $d->title;
@@ -47,12 +52,15 @@ $dphone= $d->field_dealer_phone['und'][0]['value'];
 $certificate = $d->field_certificate['und'][0]['filename'];
 }
 
+
+
 /*
 print "<pre>";
 print_r($dphone);
 print "</pre>";
 exit();
 */
+
 
 // get customer info from 170
 db_set_active('zipsdb');
@@ -67,6 +75,9 @@ $query
 ;
 
 $result = $query->execute();
+
+// print_r($result);
+// exit();
 
 if(!isset($result)){
 // make up generic user info
@@ -88,13 +99,18 @@ $email = "";
 	$city = $r->city;
 	$state = $r->state;
 	$zip = $r->zip;
-	
+$zip = substr($zip , 0, 6);
+$zip = str_replace("-","",$zip);
 	$phone = $r->recip_phone;
 	$email = $r->recip_email;
 	}
 }
 $title = $fname."-".$lname;
+// print $title;
+// exit();
+
 db_set_active();
+
 
 
 
@@ -127,6 +143,7 @@ $node_wrapper->field_web_user_address = array(
  $node_wrapper->save();
 
 
+
 // give them the personalized voucher
 ob_clean();
 
@@ -134,7 +151,6 @@ ob_clean();
 $info =  field_info_field('field_certificate');
 $default_img_fid = $info['settings']['default_image'];
 $default_img_file = file_load($default_img_fid);
-
 
 header("Content-Type: image/jpeg");
 
@@ -150,6 +166,7 @@ $certificate = 'default_images/'.$default_img_file->filename;
 
       // Set Path to Font File
       $font_path = '/var/www/html/font.ttf';
+
 
 /*
     [country] => US
@@ -167,6 +184,8 @@ $certificate = 'default_images/'.$default_img_file->filename;
     [last_name] => Auto Samples
     [data] => 
 */
+
+
 
 $address_city_state = $daddress['thoroughfare'].", ".$daddress['locality'].", ".$daddress['administrative_area'];
 
@@ -214,3 +233,4 @@ $text5 = "";
 
       // Clear Memory
       imagedestroy($jpg_image);
+
