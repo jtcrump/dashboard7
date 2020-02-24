@@ -19,6 +19,8 @@ $title = $_POST['ivr'];
 $fname = $_POST['fname'];
 $lname = $_POST['lname'];
 $PropID = $_POST['sid'];
+$mail_drop = $_POST['mail_drop'];
+
 $address = $_POST['address'];
 $address2 = $_POST['address2'];
 $city = $_POST['city'];
@@ -29,6 +31,7 @@ $phone = $_POST['recip_phone'];
 $email = $_POST['recip_email'];
 
 
+$responded = $_POST['responded'];
 $appointment = $_POST['appointment'];
 if(strlen($appointment) > 3){
 $appointment = strtotime($appointment);
@@ -77,6 +80,7 @@ $node_wrapper->field_mail_recip_last_name = $lname;
 $node_wrapper->field_mail_recip_phone = $phone;
 $node_wrapper->field_mail_recip_email = $email;
 $node_wrapper->field_dealership = $dealership;
+$node_wrapper->field_mail_drop = $mail_drop;
 $node_wrapper->field_web_user_answer_1 = $q1;
 $node_wrapper->field_web_user_answer_2 = $q2;
 $node_wrapper->field_web_user_answer_3 = $q3;
@@ -111,6 +115,7 @@ $node_wrapper->field_mail_recip_first_name = $fname;
 $node_wrapper->field_mail_recip_last_name = $lname;
 $node_wrapper->field_mail_recip_phone = $phone;
 $node_wrapper->field_mail_recip_email = $email;
+$node_wrapper->field_mail_drop = $mail_drop;
 $node_wrapper->field_dealership = $dealership;
 $node_wrapper->field_web_user_answer_1 = $q1;
 $node_wrapper->field_web_user_answer_2 = $q2;
@@ -152,6 +157,7 @@ $node_wrapper->field_mail_recip_last_name = $lname;
 $node_wrapper->field_mail_recip_phone = $phone;
 $node_wrapper->field_mail_recip_email = $email;
 $node_wrapper->field_dealership = $dealership;
+$node_wrapper->field_mail_drop = $mail_drop;
 $node_wrapper->field_web_user_answer_1 = $q1;
 $node_wrapper->field_web_user_answer_2 = $q2;
 $node_wrapper->field_web_user_answer_3 = $q3;
@@ -189,6 +195,7 @@ $node_wrapper->field_mail_recip_last_name = $lname;
 $node_wrapper->field_mail_recip_phone = $phone;
 $node_wrapper->field_mail_recip_email = $email;
 $node_wrapper->field_dealership = $dealership;
+$node_wrapper->field_mail_drop = $mail_drop;
 $node_wrapper->field_web_user_answer_1 = $q1;
 $node_wrapper->field_web_user_answer_2 = $q2;
 $node_wrapper->field_web_user_answer_3 = $q3;
@@ -218,8 +225,35 @@ $node_wrapper->field_web_user_address = array(
 
 
 
+if($responded == '1' AND $origin == "Cloud One"){
+// find the nid
+$query = new EntityFieldQuery();
+$query->entityCondition('entity_type', 'node')
+->entityCondition('bundle', 'web_responses')
+->propertyCondition('status', 1)
+->fieldCondition('field_dealership', $dealership, '=')
+->fieldCondition('field_mail_recip_first_name',$fname, '=')
+->fieldCondition('field_mail_recip_last_name',$lname, '=')
+->range(0, 1)
+->addMetaData('account', user_load(1));
+$result = $query->execute();
 
- $node_wrapper->save();
+    if(isset($result['node'])) {
+    $nid = array_keys($result['node']);
+    // update the node
+    $node = node_load($nid);
+    $node_wrapper = entity_metadat_wrapper('node', $node);
+    $node_wrapper->field_scheduled_appointments->set($appointment);
+    $node_wrapper->field_web_user_notes = array(
+            0 => array(
+            'value' => $notes,
+            )
+        );
+    }
+}
+
+
+$node_wrapper->save();
 
 
 
