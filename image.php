@@ -3,7 +3,6 @@
 
 
 
-
  define('DRUPAL_ROOT', getcwd());
 
  include_once DRUPAL_ROOT . '/includes/bootstrap.inc';
@@ -19,13 +18,25 @@ $PropID = $_GET['propid'];
 	$PropID = $_POST['propid'];
 	} else {
 	$purl_url = request_uri(); 
-	$pu = explode("?",$purl_url);
+	$pu = explode("/",$purl_url);
 	$p = explode("/",$pu[1]);
-	$PropID = $p[0];
-	$purl = $p[1];
+	    $PropID = $pu[2];
+	    $purl = $pu[3];
 	}
 }
 
+
+/*
+print "SELECT * FROM mail_recips WHERE purl like '".$pu[3];
+exit();
+*/
+
+/*
+print $purl;
+print "<br />";
+print $PropID;
+exit();
+*/
 
 // get dealership info for sale from dashboard
 $query = new EntityFieldQuery();
@@ -43,6 +54,12 @@ if (isset($result['node'])) {
   $dealer = entity_load('node', $job_dashboard_nid);
 } 
 
+/*
+print "<pre>";
+print_r($dealer);
+print "</pre>";
+exit();
+*/
 
 foreach($dealer as $d){
 $dealership = $d->vid;
@@ -50,8 +67,21 @@ $dealership_name = $d->title;
 $daddress = $d->field_address['und'][0];
 $dphone= $d->field_dealer_phone['und'][0]['value'];
 $certificate = $d->field_certificate['und'][0]['filename'];
+$enddate = $d->field_sale_end_date['und'][0]['value'];
 }
 
+
+$now = date("Y-m-d");
+if($now > $enddate){
+print '<h1 style="text-align: center;">Sorry! This event has already ended!</h1>';
+exit();
+}
+/*
+print "<pre>";
+print_r($d);
+print "</pre>";
+exit();
+*/
 
 
 /*
@@ -65,10 +95,19 @@ exit();
 // get customer info from 170
 db_set_active('zipsdb');
 
+/*
+print $purl;
+print "<br />";
+print $PropID;
+exit();
+*/
+
+// $purl = '5e17c7768bc0a';
+// $PropID = '33464';
 
 $query = db_select('mail_recips', 'fe');
 $query
-->fields('fe', array('fname', 'lname', 'dealer', 'address', 'address2', 'city', 'state', 'zip', 'recip_phone', 'recip_email'))
+->fields('fe', array('fname', 'lname', 'dealer', 'address', 'address2', 'city', 'state', 'zip', 'recip_phone', 'recip_email', 'responded', 'mail_drop' ))
 ->condition('purl',$purl,'=')
 ->condition('dealer',$PropID,'=')
 ->range(0,1)
@@ -76,8 +115,17 @@ $query
 
 $result = $query->execute();
 
-// print_r($result);
-// exit();
+
+$query2 = db_query("UPDATE mail_recips SET responded = '1' WHERE dealer LIKE '$PropID' and purl LIKE '$purl'");
+$result2 = $query2->execute();
+
+/*
+print "<pre>";
+ print_r($result);
+print "</pre>";
+ exit();
+*/
+
 
 if(!isset($result)){
 // make up generic user info
@@ -103,8 +151,18 @@ $zip = substr($zip , 0, 6);
 $zip = str_replace("-","",$zip);
 	$phone = $r->recip_phone;
 	$email = $r->recip_email;
+        $responded = $r->responded;
+        $mail_drop = $r->mail_drop;
 	}
 }
+
+
+if($fname == "PREFERRED CUSTOMER"){
+$fname = "Preferred";
+$lname = "Customer";
+}
+
+
 $title = $fname."-".$lname;
 // print $title;
 // exit();
@@ -126,6 +184,7 @@ $node_wrapper->title = $title;
 $node_wrapper->field_mail_recip_first_name = $fname;
 $node_wrapper->field_mail_recip_last_name = $lname;
 $node_wrapper->field_dealership = $dealership;
+$node_wrapper->field_mail_drop = $mail_drop;
 $node_wrapper->field_response_origin = "Web";
 $node_wrapper->field_mail_recip_phone = $phone;
 $node_wrapper->field_mail_recip_email = $email;
@@ -140,13 +199,18 @@ $node_wrapper->field_web_user_address = array(
         'postal_code' => $zip
       );
 
+if($responded != '1'){
  $node_wrapper->save();
-
+}
 
 
 // give them the personalized voucher
 ob_clean();
 
+/*
+print $certificate;
+exit();
+*/
 
 $info =  field_info_field('field_certificate');
 $default_img_fid = $info['settings']['default_image'];
@@ -163,7 +227,7 @@ $certificate = 'default_images/'.$default_img_file->filename;
 
       // Allocate A Color For The Text
       $white = imagecolorallocate($jpg_image, 255, 255, 255);
-
+      $black = imagecolorallocate($jpg_image, 0, 0, 0);
       // Set Path to Font File
       $font_path = '/var/www/html/font.ttf';
 
@@ -186,27 +250,27 @@ $certificate = 'default_images/'.$default_img_file->filename;
 */
 
 
-
 $address_city_state = $daddress['thoroughfare'].", ".$daddress['locality'].", ".$daddress['administrative_area'];
 
       // Set Text to Be Printed On Image
       $text = $fname;
       $text2 = $lname;
       $text3 = $dealership_name;
-
-if(strlen($text3) > 23){
+$text8 = "Not valid past ".substr($enddate,0,10);
+if(strlen($text3) > 23 AND substr_count($dealer, " ") > 2){
 $dealer_full = $text3;
 $dealer_split = explode(" ",$text3);
 $text3 = $dealer_split[0] . " " . $dealer_split[1] . " " . $dealer_split[2];
-$text4 = str_replace($text3." ", "", $dealer_full);
+$text4 = str_replace($text3, "", $dealer_full);
 $text5 = $address_city_state;
+
 if(strlen($dphone) > 3) {
 $text6 = "Call: " . $dphone;
 } else {
 $text6 = "";
 } 
-      imagettftext($jpg_image, 35, 0, 375, 280, $white, $font_path, $text3);
-      imagettftext($jpg_image, 35, 0, 375, 315, $white, $font_path, $text4);
+      imagettftext($jpg_image, 34, 0, 375, 280, $white, $font_path, $text3);
+      imagettftext($jpg_image, 34, 0, 375, 315, $white, $font_path, $text4);
       imagettftext($jpg_image, 25, 0, 375, 345, $white, $font_path, $text5);
       imagettftext($jpg_image, 25, 0, 375, 380, $white, $font_path, $text6);
 } else {
@@ -216,17 +280,16 @@ $text5 = "Call: " . $dphone;
 } else {
 $text5 = "";
 }
-      imagettftext($jpg_image, 35, 0, 375, 280, $white, $font_path, $text3);
-      imagettftext($jpg_image, 25, 0, 375, 310, $white, $font_path, $text4);
-      imagettftext($jpg_image, 25, 0, 375, 345, $white, $font_path, $text5);
+      imagettftext($jpg_image, 35, 0, 375, 290, $white, $font_path, $text3);
+      imagettftext($jpg_image, 25, 0, 375, 320, $white, $font_path, $text4);
+      imagettftext($jpg_image, 25, 0, 375, 355, $white, $font_path, $text5);
 }
 
 // size - angle - margin left - from top
       // Print Text On Image
-      imagettftext($jpg_image, 45, 0, 525, 150, $white, $font_path, $text);
-      imagettftext($jpg_image, 45, 0, 525, 195, $white, $font_path, $text2);
-
-
+      imagettftext($jpg_image, 42, 0, 505, 200, $white, $font_path, $text);
+      imagettftext($jpg_image, 42, 0, 505, 245, $white, $font_path, $text2);
+      imagettftext($jpg_image, 12, 0, 40, 395, $black, $font_path, $text8);
 
       // Send Image to Browser
       imagejpeg($jpg_image);

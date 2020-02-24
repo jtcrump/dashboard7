@@ -16,6 +16,49 @@
 
 function dashboard_omega_preprocess_views_view(&$vars) {
 $view = $vars['view'];
+
+
+if($view->name == "customer_responses"){
+	if($view->current_display == "page_3" or $view->current_display == "page_4"){
+		if($view->current_display == "page_3"){
+	             if(!isset($view->exposed_input['field_scheduled_appointments_value'])){
+	             $day = date("d");
+	             $month = date("m");
+	             $year = date("Y");
+                     } else {
+		     $day = $view->exposed_input['field_scheduled_appointments_value']['value']['day'];
+			if(strlen($day) == 1){ $month = "0".$day; }
+		     $month = $view->exposed_input['field_scheduled_appointments_value']['value']['month'];
+			if(strlen($month) == 1){ $month = "0".$month; }
+		     $year = $view->exposed_input['field_scheduled_appointments_value']['value']['year'];
+		     }
+          }
+		if($view->current_display == "page_4"){
+	             if(!isset($view->exposed_input['date_filter']['value']['day'])){
+	             $day = date("d");
+	             $month = date("m");
+	             $year = date("Y");
+                     } else {
+		     $day = $view->exposed_input['date_filter']['value']['day'];
+			if(strlen($day) == 1){ $month = "0".$day; }
+		     $month = $view->exposed_input['date_filter']['value']['month'];
+			if(strlen($month) == 1){ $month = "0".$month; }
+		     $year = $view->exposed_input['date_filter']['value']['year'];
+		     }
+        }
+	$date = $year."-".$month."-".$day;
+	$dnid = $view->result[0]->_field_data['nid_1']['entity']->field_dealership['und'][0]['target_id'];
+	$node = node_load($dnid);
+	$lat = $node->field_map_position['und'][0]['lat'];
+
+		if($view->current_display == "page_3"){
+		print '<p>&nbsp;</p><p><a href="/data/export_app/'.$dnid.'/'.$lat.'/'.$date.'" class="button">GET CSV FOR DATE</a></p>';
+		} else {
+		print '<p>&nbsp;</p><p><a href="/data/export_need_app/'.$dnid.'/'.$lat.'/'.$date.'" class="button">GET CSV FOR DATE</a></p>';
+		}
+	}
+}
+
 	if($view->name == 'get_mail_recipient') {
 		if($view->current_display == 'block'){
 // $_SESSION['fname'] = $view->result[0]->{'node/fname'};
