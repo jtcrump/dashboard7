@@ -40,6 +40,8 @@ $appointment = strtotime($appointment);
 $origin = $_POST['origin'];
 $notes = $_POST['notes'];
 
+$zipcount = $_POST['zipcount'];
+
 $query = new EntityFieldQuery();
 $query->entityCondition('entity_type', 'node')
   ->entityCondition('bundle', 'job_dashboard')
@@ -88,6 +90,7 @@ $node_wrapper->field_web_user_answer_4 = $q4;
 $node_wrapper->field_web_user_answer_5 = $q5;
 $node_wrapper->field_web_user_answer_6 = $q6;
 $node_wrapper->field_web_user_answer_7 = $q7;
+$node_wrapper->field_zipcount = $zipcount;
 $node_wrapper->field_response_origin = $origin;
 $node_wrapper->field_web_user_address = array( 
         'country' => 'US',
@@ -124,6 +127,7 @@ $node_wrapper->field_web_user_answer_4 = $q4;
 $node_wrapper->field_web_user_answer_5 = $q5;
 $node_wrapper->field_web_user_answer_6 = $q6;
 $node_wrapper->field_web_user_answer_7 = $q7;
+$node_wrapper->field_zipcount = $zipcount;
 $node_wrapper->field_response_origin = $origin;
 $node_wrapper->field_web_user_notes = array(
    0 => array(
@@ -166,6 +170,7 @@ $node_wrapper->field_web_user_answer_5 = $q5;
 $node_wrapper->field_web_user_answer_6 = $q6;
 $node_wrapper->field_web_user_answer_7 = $q7;
 $node_wrapper->field_response_origin = $origin;
+$node_wrapper->field_zipcount = $zipcount;
 $node_wrapper->field_scheduled_appointments = $appointment;
 $node_wrapper->field_web_user_address = array( 
         'country' => 'US',
@@ -204,6 +209,7 @@ $node_wrapper->field_web_user_answer_5 = $q5;
 $node_wrapper->field_web_user_answer_6 = $q6;
 $node_wrapper->field_web_user_answer_7 = $q7;
 $node_wrapper->field_response_origin = $origin;
+$node_wrapper->field_zipcount = $zipcount;
 $node_wrapper->field_scheduled_appointments = $appointment;
 $node_wrapper->field_web_user_notes = array(
    0 => array(
