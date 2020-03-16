@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * This file is empty by default because the base theme chain (Alpha & Omega) provides
@@ -10,36 +9,6 @@
  * for your subtheme grows. Please read the README.txt in the /preprocess and /process subfolders
  * for more information on this topic.
  */
-
-function dashboard_omega_theme() {
-  $items = array();
-	
-  $items['user_login'] = array(
-    'render element' => 'form',
-    'path' => drupal_get_path('theme', 'dashboard_omega') . '/templates',
-    'template' => 'user-login',
-    'preprocess functions' => array(
-       'dashboard_omega_preprocess_user_login'
-    ),
-  );
-  $items['user_pass'] = array(
-    'render element' => 'form',
-    'path' => drupal_get_path('theme', 'dashboard_omega') . '/templates',
-    'template' => 'user-pass',
-    'preprocess functions' => array(
-      'dashboard_omega_preprocess_user_pass'
-    ),
-  );
-  return $items;
-}
-
-function dashboard_omega_preprocess_user_login(&$vars) {
-  $vars['intro_text'] = t('Sign into your account');
-}
-function dashboard_omega_preprocess_user_pass(&$vars) {
-  $vars['intro_text'] = t('This is my super awesome request new password form');
-}
-
 
 function dashboard_omega_preprocess_views_view(&$vars) {
 $view = $vars['view'];
