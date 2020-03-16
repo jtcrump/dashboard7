@@ -107,7 +107,7 @@ exit();
 
 $query = db_select('mail_recips', 'fe');
 $query
-->fields('fe', array('fname', 'lname', 'dealer', 'address', 'address2', 'city', 'state', 'zip', 'recip_phone', 'recip_email', 'responded', 'mail_drop' ))
+->fields('fe', array('fname', 'lname', 'dealer', 'address', 'address2', 'city', 'state', 'zip', 'recip_phone', 'recip_email', 'responded', 'mail_drop', 'zip_count' ))
 ->condition('purl',$purl,'=')
 ->condition('dealer',$PropID,'=')
 ->range(0,1)
@@ -153,6 +153,7 @@ $zip = str_replace("-","",$zip);
 	$email = $r->recip_email;
         $responded = $r->responded;
         $mail_drop = $r->mail_drop;
+        $zipcount = $r->zip_count;
 	}
 }
 
@@ -188,7 +189,7 @@ $node_wrapper->field_mail_drop = $mail_drop;
 $node_wrapper->field_response_origin = "Web";
 $node_wrapper->field_mail_recip_phone = $phone;
 $node_wrapper->field_mail_recip_email = $email;
-
+$node_wrapper->field_zipcount = $zipcount;
 $node_wrapper->field_web_user_address = array( 
         'country' => 'US',
         'thoroughfare' => $address,
